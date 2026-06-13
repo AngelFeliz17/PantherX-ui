@@ -45,6 +45,20 @@ export default function VerifyEmailPage({ params }: PageProps) {
       setIsLoading(false);
     }
   }
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    const newCode = pastedData.split("").concat(Array(6 - pastedData.length).fill(""));
+    newCode.forEach((char, index) => {
+      if (inputsRef.current[index]) {
+        inputsRef.current[index].value = char;
+      }
+    });
+    if (pastedData.length === 6) {
+      inputsRef.current[5]?.focus();
+    }
+  };
   
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-purple-500 to-purple-700 px-4">
@@ -91,7 +105,11 @@ export default function VerifyEmailPage({ params }: PageProps) {
                         inputsRef.current[index] = el;
                       }}
                       type="text"
-                      name="code"
+                      placeholder="•"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      name={`code-${index}`}
+                      onPaste={handlePaste}
                       maxLength={1}
                       className="h-14 w-14 rounded-lg border text-center text-xl"
                       onChange={(e) => {
