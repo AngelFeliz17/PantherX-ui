@@ -13,18 +13,28 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { signUp } from "@/lib/api/auth"
 
-const classnames = {
-  input: "bg-gray-300 border-none focus-visible:ring-2 focus-visible:ring-purple-700 focus-visible:ring-offset-0 p-5 rounded-md"
-}
-
 export default function SignUp() {
+  const searchParams = useSearchParams();
+  const [prefilledEmail, setPrefilledEmail] = useState("");
+
+  useEffect(() => {
+    const emailFromParams = searchParams.get("email");
+    if (emailFromParams) {
+      setPrefilledEmail(decodeURIComponent(emailFromParams));
+    }
+  }, [searchParams]);
+
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  
+  const classnames = {
+    input: "bg-gray-300 border-none focus-visible:ring-2 focus-visible:ring-purple-700 focus-visible:ring-offset-0 p-5 rounded-md"
+  }
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     setIsLoading(true)
@@ -89,6 +99,8 @@ export default function SignUp() {
                 <Input
                     className={classnames.input}
                     id="email-spacing"
+                    value={prefilledEmail}
+                    onChange={(e) => setPrefilledEmail(e.currentTarget.value)}
                     name="email"
                     type="email"
                   placeholder={"you@" + process.env.NEXT_PUBLIC_EMAIL_DOMAIN}

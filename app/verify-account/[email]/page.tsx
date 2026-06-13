@@ -25,8 +25,10 @@ interface PageProps {
 export default function VerifyEmailPage({ params }: PageProps) {
   const router = useRouter()
   const inputsRef = useRef<HTMLInputElement[]>([]);
+  
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false)
+
   const unwrappedParams = React.use(params);
   const email = decodeURIComponent(unwrappedParams.email);
   
@@ -47,24 +49,50 @@ export default function VerifyEmailPage({ params }: PageProps) {
   }
 
   const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-    const newCode = pastedData.split("").concat(Array(6 - pastedData.length).fill(""));
-    newCode.forEach((char, index) => {
-      if (inputsRef.current[index]) {
-        inputsRef.current[index].value = char;
-      }
-    });
-    if (pastedData.length === 6) {
+    const pastedData = e.clipboardData.getData("Text").trim();
+    if (/^\d{6}$/.test(pastedData)) {
+      e.preventDefault();
+      pastedData.split("").forEach((digit, i) => {
+        if (inputsRef.current[i]) {
+          inputsRef.current[i].value = digit;
+        }
+      });
       inputsRef.current[5]?.focus();
     }
-  };
+  }
+
+  const handleBackSpace = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === "Backspace" && !e.currentTarget.value && index > 0) {
+      inputsRef.current[index - 1]?.focus();
+    }
+  }
+
+  const handleInput = (e: React.FormEvent<HTMLInputElement>, index: number ) => {
+    const value = e.currentTarget.value.replace(/\D/g, "");
+
+    if (value.length > 1) {
+      value.split("").slice(0, 6).forEach((digit, i) => {
+        if (inputsRef.current[i]) {
+          inputsRef.current[i].value = digit;
+        }
+      });
+
+      inputsRef.current[Math.min(value.length - 1, 5)]?.focus();
+      return;
+    }
+
+    e.currentTarget.value = value;
+
+    if (value && index < 5) {
+      inputsRef.current[index + 1]?.focus();
+    }
+  }
   
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-purple-500 to-purple-700 px-4">
-      <div className="w-full max-w-md">
+    <div className="flex min-h-dvh items-center justify-center bg-gradient-to-b from-purple-500 to-purple-700 p-4">
+        <div className="mx-auto grid w-full max-w-sm md:max-w-md gap-4 px-4">
         <Card className="overflow-hidden">
-          <CardHeader className="bg-purple-700 text-white flex flex-col items-center gap-4 py-10 -mx-6 -mt-6 p-6">
+          <CardHeader className="bg-purple-700 text-white flex flex-col items-center gap-4 py-6 md:py-10 -mx-6 -mt-6 p-6">
             <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-purple-500">
               <Mail className="h-8 w-8" />
             </div>
@@ -80,7 +108,7 @@ export default function VerifyEmailPage({ params }: PageProps) {
             </div>
           </CardHeader>
 
-          <CardContent className="space-y-8 p-8">
+          <CardContent className="space-y-6 md:space-y-8 p-6 md:p-8">
             <div className="rounded-xl bg-gray-100 p-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Verification code sent to
@@ -104,38 +132,19 @@ export default function VerifyEmailPage({ params }: PageProps) {
                       ref={(el: any) => {
                         inputsRef.current[index] = el;
                       }}
-                      type="text"
+                      type="tel"
                       placeholder="•"
                       inputMode="numeric"
-                      autoComplete="one-time-code"
+                      pattern="[0-9]*"
+                      autoComplete={index === 0 ? "one-time-code" : "off"}
                       name={`code-${index}`}
                       onPaste={handlePaste}
+                      onInput={(e: any) => {
+                        handleInput(e, index);
+                      }}
+                      onKeyDown={(e) => handleBackSpace(e, index)}
                       maxLength={1}
-                      className="h-14 w-14 rounded-lg border text-center text-xl"
-                      onChange={(e) => {
-                        const value = e.target.value;
-
-                        // only allow digits
-                        if (!/^\d?$/.test(value)) {
-                          e.target.value = "";
-                          return;
-                        }
-
-                        // move to next input
-                        if (value && index < 5) {
-                          inputsRef.current[index + 1]?.focus();
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        // go back when pressing backspace on empty input
-                        if (
-                          e.key === "Backspace" &&
-                          !e.currentTarget.value &&
-                          index > 0
-                        ) {
-                          inputsRef.current[index - 1]?.focus();
-                        }
-                      }}
+                      className="w-full aspect-square rounded-lg border text-center text-xl focus:border-purple-500 focus:ring-1 focus:ring-purple-500 focus:outline-none"
                     />
                   ))}
                 </div>
@@ -182,8 +191,10 @@ export default function VerifyEmailPage({ params }: PageProps) {
               <p className="text-muted-foreground">
                 Wrong email address?{" "}
                 <button
+
                   type="button"
                   className="font-semibold text-purple-600 hover:underline"
+                  onClick={() => router.push(`/signup?email=${encodeURIComponent(email)}`)}
                 >
                   Change email
                 </button>
@@ -202,7 +213,7 @@ export default function VerifyEmailPage({ params }: PageProps) {
           </CardContent>
         </Card>
 
-        <p className="mt-6 text-center text-sm text-white/80">
+        <p className="text-center text-sm text-white/80">
           Check your spam folder if you don't see the email
         </p>
       </div>
