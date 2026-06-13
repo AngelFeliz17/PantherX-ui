@@ -40,7 +40,7 @@ export default function VerifyEmailPage({ params }: PageProps) {
     try{
       const response = await verifyAccount({ code, email } as VerifyCodeData);
       router.push('/home');
-      localStorage.setItem("token", response.access_token);
+      localStorage.setItem("access_token", response.access_token);
     } catch(error: any) {
       setError(error.response?.data?.message || "Something went wrong");
     } finally {
@@ -207,7 +207,7 @@ export default function VerifyEmailPage({ params }: PageProps) {
                 className="inline-flex items-center gap-2 font-medium text-purple-600 hover:underline"
               >
                 <ArrowLeft size={18} />
-                Back to Sign In
+                Back to Log In
               </Link>
             </div>
           </CardContent>

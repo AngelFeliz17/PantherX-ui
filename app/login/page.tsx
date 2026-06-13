@@ -15,21 +15,18 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { signUp } from "@/lib/api/auth"
+import { logIn } from "@/lib/api/auth"
 import { Eye, EyeOff } from "lucide-react"
 import { classnames } from "@/styles/input.styles"
 
-export default function SignUp({ searchParams }: { searchParams: Promise<{ email?: string }> }) {
-  const params = React.use(searchParams);
-  const [prefilledEmail, setPrefilledEmail] = useState(params.email ?? "");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
+export default function LogIn() {
   const router = useRouter()
+  
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
     setIsLoading(true)
@@ -37,21 +34,12 @@ export default function SignUp({ searchParams }: { searchParams: Promise<{ email
     const formData = new FormData(e.target as HTMLFormElement)
     const email = formData.get("email") as string
     const password = formData.get("password") as string
-    const confirmPassword = formData.get("confirm-password") as string
-    const name = formData.get("name") as string;
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
-      return;
-    }
     
     try {
-      const result = await signUp({ email, password, name });
-      
-      router.push(`/verify-account/${encodeURIComponent(result.email)}`);
+      const result = await logIn({ email, password });
+      localStorage.setItem("access_token", result.token);
+      router.push(`/listings`);
     } catch(error: any) {
-      console.log(error);
-      console.log(error.response);
       setError(error.response?.data?.message || "Something went wrong");
     } finally {
       setIsLoading(false);
@@ -62,13 +50,9 @@ export default function SignUp({ searchParams }: { searchParams: Promise<{ email
     setShowPassword(prev => !prev);
   }
 
-  const toggleConfirmPasswordVisibility = () => {
-    setShowConfirmPassword(prev => !prev);
-  }
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-purple-500 to-purple-700">
-    <div className="mx-auto grid w-full max-w-sm md:max-w-lg gap-4 px-4">
+    <div className="mx-auto grid w-full max-w-sm md:max-w-md gap-4 px-4">
       <Card className={"[--card-spacing:--spacing(5)]"}>
         <CardHeader className="bg-purple-700 text-white rounded-t-xl mb-6 flex flex-col items-center justify-center space-y-0 -mx-6 -mt-6 p-6">
 
@@ -81,25 +65,12 @@ export default function SignUp({ searchParams }: { searchParams: Promise<{ email
             Join PantherX
             </CardTitle>
           <CardDescription className="text-white text-center">
-            Create your account to start buying and selling
+            Sign In to PantherX
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form id="signup-form" onSubmit={handleSignUp}>
+          <form id="signup-form" onSubmit={handleLogIn}>
             <div className="flex flex-col gap-6">
-
-              {/* Full Name */}
-              <div className="grid gap-2">
-                <Label htmlFor="fname-spacing" className="font-bold">Full Name</Label>
-                <Input
-                  className={classnames.input}
-                  id="name"
-                  name="name"
-                  type="text"
-                  placeholder="John Doe"
-                  required
-                />
-              </div>
 
               {/* Email */}
               <div className="grid gap-2">
@@ -107,8 +78,6 @@ export default function SignUp({ searchParams }: { searchParams: Promise<{ email
                 <Input
                     className={classnames.input}
                     id="email"
-                    value={prefilledEmail}
-                    onChange={(e) => setPrefilledEmail(e.currentTarget.value)}
                     name="email"
                     type="email"
                     autoComplete="email"
@@ -130,39 +99,28 @@ export default function SignUp({ searchParams }: { searchParams: Promise<{ email
                 </button>
                 </div>
               </div>
-
-              {/* Confirm Password */}
-              <div className="grid gap-2">
-                <div className="flex items-center">
-                  <Label htmlFor="confirm-password-spacing" className="font-bold">Confirm Password</Label>
-                </div>
-                <div className="relative">
-                  <Input className={`${classnames.input} pr-10`} id="confirm-password" name="confirm-password" placeholder="••••••••" type={showConfirmPassword ? "text" : "password"} autoComplete="new-password" required />
-
-                  <button type="button" onClick={toggleConfirmPasswordVisibility} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
-                    {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
-              </div>
-          {error && <p className="first-letter:uppercase text-red-500 text-sm ">{error}</p>}
             </div>
           </form>
+          {error && <p className="first-letter:uppercase text-red-500 text-sm mt-2">{error}</p>}
         </CardContent>
 
         {/* Button */}
         <CardFooter className="flex-col gap-2">
+          <span className="text-lg text-center text-gray-500 self-end">
+            <a href="/forgot-password" className="text-purple-700 font-medium no-underline">Forgot Password?</a>
+          </span>
           <Button disabled={isLoading} form="signup-form" type="submit" className="w-full bg-purple-700 text-white hover:bg-purple-800 py-6 rounded-full">
-            <span className="text-white font-bold text-lg"> { isLoading ? 'Creating Account...' : 'Create Account'}</span>
+            <span className="text-white font-bold text-lg"> { isLoading ? 'Loging In...' : 'Log In'}</span>
           </Button>
           <span className="text-lg text-center text-gray-500">
-            Already have an account? <a href="/login" className="text-purple-700 font-medium no-underline">Log In</a>
+            Don't have an account? <a href="/signup" className="text-purple-700 font-medium no-underline">Sign Up</a>
           </span>
         </CardFooter>
       </Card>
 
     <div className="flex flex-col items-center justify-center">
     <p className="text-center text-white/80 text-sm">
-          UNI students only. You must have a valid university email to join.
+          UNI students only. You must have a valid university email to Log In.
         </p>
       </div>
     </div>
