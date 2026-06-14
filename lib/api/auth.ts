@@ -1,4 +1,4 @@
-import { SignUpData, VerifyCodeData } from "@/lib/dto/auth.dto";
+import { ForgotPasswordEmailData, ResetPasswordData, SignUpData, VerifyCodeData } from "@/lib/dto/auth.dto";
 import axios from "axios";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -21,5 +21,15 @@ export const verifyAccount = async (data: VerifyCodeData) => {
 
 export const generateCode = async (email: string) => {
     const res = await axios.post(`${API_URL}/auth/generate-code`, { email });
+    return res.data;
+}
+
+export const sendForgotPasswordEmail = async (data: ForgotPasswordEmailData) => {
+    const res = await axios.post(`${API_URL}/auth/forgot-password`, data);
+    return res.data;
+}
+
+export const resetPassword = async (token: string, data: ResetPasswordData) => {
+    const res = await axios.put(`${API_URL}/auth/reset-password/${token}`, data );
     return res.data;
 }
