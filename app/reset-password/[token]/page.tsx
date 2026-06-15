@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Eye, EyeOff, KeyRound } from "lucide-react";
@@ -12,7 +11,8 @@ import { classnames } from "@/styles/input.styles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Feature from "@/lib/functions/feature";
+import AuthLeftPanel from "@/components/authentication.left.design";
+import AuthRightPanel from "@/components/authentication.right.design";
 
 const PASSWORD_MIN_LENGTH = 8;
 
@@ -63,50 +63,11 @@ export default function ResetPassword() {
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-2 bg-background">
       {/* LEFT SIDE */}
-      <div className="relative hidden lg:block">
-        <Image src="/images/campanile.jpg" alt="UNI Campus" fill priority className="object-cover" />
-        <div className="absolute inset-0 bg-black/45" />
-        <div className="absolute inset-0 flex flex-col justify-between p-10 text-white">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur">
-              <span className="text-2xl font-bold">P</span>
-            </div>
-            <span className="text-3xl font-bold">PantherX</span>
-          </div>
-          <div className="max-w-lg">
-            <h1 className="text-5xl font-bold leading-tight">Set a New Password</h1>
-            <p className="mt-5 text-lg text-white/90">
-              Choose a strong password to keep your account secure.
-            </p>
-          </div>
-          <div className="space-y-6">
-            <Feature title="Stay Secure" description="Use a mix of letters, numbers, and symbols." />
-            <Feature title="Don't Reuse" description="Avoid passwords used on other sites." />
-            <Feature title="Almost There" description="One step away from getting back in." />
-          </div>
-        </div>
-      </div>
+      <AuthLeftPanel />
 
+        <AuthRightPanel subtitle="Reset your password">
       {/* RIGHT SIDE */}
-      <div className="flex min-h-screen flex-col bg-background">
-        {/* MOBILE HERO */}
-        <div className="relative h-60 lg:hidden">
-          <Image src="/images/campanile.jpg" alt="UNI Campus" fill priority className="object-cover" />
-          <div className="absolute inset-0 bg-black/35" />
-          <div className="absolute bottom-6 left-6 text-white">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 backdrop-blur">
-                <span className="text-xl font-bold">P</span>
-              </div>
-              <span className="text-2xl font-bold">PantherX</span>
-            </div>
-            <p className="mt-3 text-sm text-white/90">Set a new password</p>
-          </div>
-        </div>
-
         {/* FORM */}
-        <div className="flex flex-1 items-center justify-center px-6 py-10">
-          <div className="w-full max-w-md">
             <div className="rounded-3xl border bg-white p-6 shadow-sm lg:border-none lg:bg-transparent lg:p-0 lg:shadow-none">
               <div className="flex justify-center">
                 <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-100">
@@ -200,9 +161,7 @@ export default function ResetPassword() {
                 Check your spam folder if you don't see the email.
               </span>
             </div>
-          </div>
-        </div>
-      </div>
+    </AuthRightPanel>
     </div>
   );
 }

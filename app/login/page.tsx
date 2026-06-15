@@ -1,24 +1,30 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 
-import { logIn } from "@/lib/api/auth";
+import { generateCode, logIn } from "@/lib/api/auth";
 import { classnames } from "@/styles/input.styles";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import Feature from "@/lib/functions/feature";
+import AuthLeftPanel from "@/components/authentication.left.design";
+import AuthRightPanel from "@/components/authentication.right.design";
+
+interface AuthError {
+  message: string;
+  code?: string;
+}
 
 export default function LogIn() {
   const router = useRouter();
 
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<AuthError | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
 
   const handleLogIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -34,71 +40,30 @@ export default function LogIn() {
       localStorage.setItem("access_token", result.token);
       router.push("/listings");
     } catch (error: any) {
-      setError(error.response?.data?.message ?? "Something went wrong");
+      setError(error.response?.data ?? { message: "Something went wrong" });
     } finally {
+      console.log(error)
       setIsLoading(false);
+    }
+  };
+
+  const handleResendVerificationEmail = async () => {
+    try {
+      await generateCode(email);
+      router.push(`/verify-account/${encodeURIComponent(email)}`)
+    } catch {
+      setError({ message: "Failed to resend verification email. Please try again later"});
     }
   };
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-2 bg-background">
-      {/* LEFT SIDE */}
-      <div className="relative hidden lg:block">
-        <Image
-          src="/images/campanile.jpg"
-          alt="University of Northern Iowa"
-          fill
-          priority
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-black/45" />
-        <div className="absolute inset-0 flex flex-col justify-between p-10 text-white">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/20 backdrop-blur">
-              <span className="text-2xl font-bold">P</span>
-            </div>
-            <span className="text-3xl font-bold">PantherX</span>
-          </div>
-          <div className="max-w-lg">
-            <h1 className="text-5xl font-bold leading-tight">Buy & Sell Campus Life</h1>
-            <p className="mt-5 text-lg text-white/90">
-              The trusted marketplace for University of Northern Iowa students.
-            </p>
-          </div>
-          <div className="space-y-6">
-            <Feature title="Safe & Secure" description="Verified student accounts" />
-            <Feature title="Fast & Easy" description="Buy and sell in minutes" />
-            <Feature title="Best Value" description="Great deals from students" />
-          </div>
-        </div>
-      </div>
+      {/* LEFT SIDE - large screens only */}
+      <AuthLeftPanel />
 
+      <AuthRightPanel subtitle="Sign in to your account to continue">
       {/* RIGHT SIDE */}
-      <div className="flex min-h-screen flex-col bg-background">
-        {/* MOBILE HERO */}
-        <div className="relative h-60 lg:hidden">
-          <Image
-            src="/images/campanile.jpg"
-            alt="UNI Campus"
-            fill
-            priority
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-black/35" />
-          <div className="absolute bottom-6 left-6 text-white">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 backdrop-blur">
-                <span className="text-xl font-bold">P</span>
-              </div>
-              <span className="text-2xl font-bold">PantherX</span>
-            </div>
-            <p className="mt-3 text-sm text-white/90">Buy & Sell Campus Life</p>
-          </div>
-        </div>
-
         {/* FORM */}
-        <div className="flex flex-1 items-center justify-center px-6 py-10">
-          <div className="w-full max-w-md">
             <div className="rounded-3xl border bg-white p-6 shadow-sm lg:border-none lg:bg-transparent lg:p-0 lg:shadow-none">
               <div>
                 <h2 className="text-3xl font-bold lg:text-4xl">Welcome back</h2>
@@ -118,6 +83,8 @@ export default function LogIn() {
                     autoComplete="email"
                     required
                     placeholder={`you@${process.env.NEXT_PUBLIC_EMAIL_DOMAIN}`}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className={classnames.input}
                   />
                 </div>
@@ -154,11 +121,26 @@ export default function LogIn() {
                   </div>
                 </div>
 
-                <div className={`overflow-hidden transition-all duration-200 ${error ? "max-h-[80px] mb-2" : "max-h-0"}`}>
-                  <div className="rounded-xl bg-red-50 p-4">
-                    <p className="text-sm text-red-700 first-letter:uppercase">{error}</p>
+                {/* ERROR */}
+                  <div className={`overflow-hidden transition-all duration-200 ${error ? "max-h-[80px] mb-2" : "max-h-0"}`}>
+                      <div className="rounded-xl bg-red-50 p-4">
+                        <p className="text-sm text-red-700">
+                          {error?.message}
+                          {error?.code === "UNVERIFIED" && (
+                            <>
+                              {" "}
+                              <button
+                                type="button"
+                                onClick={handleResendVerificationEmail}
+                                className="font-medium underline cursor-pointer"
+                              >
+                                Resend verification email
+                              </button>
+                            </>
+                          )}
+                        </p>
+                      </div>
                   </div>
-                </div>
 
                 <Button
                   disabled={isLoading}
@@ -182,9 +164,7 @@ export default function LogIn() {
                 Sign in with your university email address.
               </span>
             </div>
-          </div>
-        </div>
-      </div>
+      </AuthRightPanel>
     </div>
   );
 }
