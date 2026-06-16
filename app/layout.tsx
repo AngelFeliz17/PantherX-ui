@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { getMe } from "@/lib/api/user";
+import { UserProvider } from "./context/user-context";
+import { cookies } from "next/headers";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -13,20 +15,24 @@ const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-const user = await getMe() ?? null;
+export const dynamic = "force-dynamic";
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  await cookies()
+  const user = await getMe();
   return (
     <html
       lang="en"
       className={`${poppins.className} ${poppins.className} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
+        <UserProvider user={user} >
+          {children}
+        </UserProvider>
         </body>
     </html>
   );

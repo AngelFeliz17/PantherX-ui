@@ -22,6 +22,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
+import { useUser } from "../context/user-context";
 
 const listings = [
   {
@@ -54,6 +55,7 @@ const listings = [
 ];
 
 export default function ProfilePage() {
+  const user = useUser();
   return (
     <main className="min-h-screen bg-slate-50">
       {/* Banner */}
@@ -89,24 +91,24 @@ export default function ProfilePage() {
                   {/* Info */}
                   <div>
                     <h1 className="text-3xl font-bold">
-                      Angel Feliz
+                      {user?.name}
                     </h1>
 
-                    <p className="mt-1 text-muted-foreground">
+                    {/* <p className="mt-1 text-muted-foreground">
                       @angelfeliz
-                    </p>
+                    </p> */}
 
                     <p className="mt-4 max-w-xl text-sm text-slate-600">
-                      Computer Science student building products
-                      for college students and selling things I no
-                      longer need.
+                      {user?.bio}
                     </p>
 
                     <div className="mt-5 flex flex-wrap gap-3">
+                       { user?.graduationYear && 
                       <div className="flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm">
                         <Calendar className="h-4 w-4" />
-                        Class of 2028
+                        <span>Class of {user?.graduationYear}</span>
                       </div>
+                       }
 
                       <div className="flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm">
                         <MapPin className="h-4 w-4" />

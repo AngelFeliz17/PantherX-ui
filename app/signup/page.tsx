@@ -29,6 +29,7 @@ function getPasswordStrength(password: string): {
   if (score <= 1) return { score, label: "Weak", color: "bg-red-400" };
   if (score === 2) return { score, label: "Fair", color: "bg-amber-400" };
   if (score === 3) return { score, label: "Good", color: "bg-blue-400" };
+  
   return { score, label: "Strong", color: "bg-green-500" };
 }
 
@@ -75,8 +76,8 @@ export default function SignUp({
     try {
       const result = await signUp({ email, password: pw, name });
       router.push(`/verify-account/${encodeURIComponent(result.email)}`);
-    } catch (error: any) {
-      setError(error.response?.data?.message ?? "Something went wrong");
+    } catch (err: any) {
+      setError(err?.response?.data.message || "Something went wrong");
     } finally {
       setIsLoading(false);
     }

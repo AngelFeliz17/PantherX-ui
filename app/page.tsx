@@ -18,27 +18,14 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getMe } from "@/lib/api/user";
 import NavBar from "@/components/ui/top-navbar";
 import BottomNavBar from "@/components/ui/bottom-navbar";
 import Footer from "@/components/ui/footer";
+import { useUser } from "./context/user-context";
 
 export default function LandingPage() {
+  const user = useUser();
 
-    const [user, setUser] = useState<any>(null);
-  
-    useEffect(() => {
-      const getUserInfo = async () => {
-        try {
-          const me = await getMe();
-          setUser(me);
-        } catch(err) {
-          setUser(null);
-        }};
-        
-        getUserInfo();
-      }, []);
-  
   return (
     <main className="min-h-screen bg-background pb-16 md:pb-0">
       {/* HERO */}
@@ -54,7 +41,7 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-black/55" />
 
         {/* NAVBAR */}
-        <NavBar name={user?.name} isAuthenticated={!!user} />
+        <NavBar isAuthenticated={!!user} />
 
         {/* HERO CONTENT */}
         <div className="relative z-10 flex min-h-[90vh] items-center">

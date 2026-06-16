@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
+import axios from "axios";
 
 import { generateCode, logIn } from "@/lib/api/auth";
 import { classnames } from "@/styles/input.styles";
@@ -16,6 +17,27 @@ import AuthRightPanel from "@/components/ui/authentication.right.design";
 interface AuthError {
   message: string;
   code?: string;
+}
+
+type LoginResponse = {
+  access_token?: string;
+};
+
+function saveAccessTokenCookie(response: LoginResponse) {
+  const token = response.access_token;
+
+  if (!token) {
+    return;
+  }
+
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = [
+    `access_token=${encodeURIComponent(token)}`,
+    "Path=/",
+    "Max-Age=604800",
+    "SameSite=Lax",
+    secure,
+  ].join("; ");
 }
 
 export default function LogIn() {
@@ -36,10 +58,15 @@ export default function LogIn() {
     const password = formData.get("password") as string;
 
     try {
-      await logIn({ email, password });
-      router.push("/");
-    } catch (error: any) {
-      setError(error.response?.data ?? { message: "Something went wrong" });
+      const response = await logIn({ email, password });
+      saveAccessTokenCookie(response);
+      window.location.replace("/");
+    } catch (error: unknown) {
+      if (axios.isAxiosError<AuthError>(error)) {
+        setError(error.response?.data ?? { message: "Something went wrong" });
+      } else {
+        setError({ message: "Something went wrong" });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -149,7 +176,7 @@ export default function LogIn() {
                 </Button>
 
                 <p className="pt-3 text-center text-sm text-muted-foreground">
-                  Don't have an account?{" "}
+                  Don&apos;t have an account?{" "}
                   <Link href="/signup" className="font-semibold text-violet-600 hover:underline">
                     Sign up
                   </Link>

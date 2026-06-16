@@ -10,10 +10,9 @@ import { Button } from "./button";
 
 interface UserProps {
     isAuthenticated: boolean;
-    name?: string;
 }
 
-export default function TopNavBar({ isAuthenticated, name }: UserProps) {
+export default function TopNavBar({ isAuthenticated }: UserProps) {
     return (
         <nav className="absolute top-0 z-20 w-full border-b border-white/10">
           <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
