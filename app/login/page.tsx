@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
@@ -10,8 +10,8 @@ import { classnames } from "@/styles/input.styles";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import AuthLeftPanel from "@/components/authentication.left.design";
-import AuthRightPanel from "@/components/authentication.right.design";
+import AuthLeftPanel from "@/components/ui/authentication.left.design";
+import AuthRightPanel from "@/components/ui/authentication.right.design";
 
 interface AuthError {
   message: string;
@@ -36,13 +36,11 @@ export default function LogIn() {
     const password = formData.get("password") as string;
 
     try {
-      const result = await logIn({ email, password });
-      localStorage.setItem("access_token", result.token);
-      router.push("/listings");
+      await logIn({ email, password });
+      router.push("/");
     } catch (error: any) {
       setError(error.response?.data ?? { message: "Something went wrong" });
     } finally {
-      console.log(error)
       setIsLoading(false);
     }
   };

@@ -9,8 +9,8 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { generateCode, verifyAccount } from "@/lib/api/auth";
 import { VerifyCodeData } from "@/lib/dto/auth.dto";
-import AuthLeftPanel from "@/components/authentication.left.design";
-import AuthRightPanel from "@/components/authentication.right.design";
+import AuthLeftPanel from "@/components/ui/authentication.left.design";
+import AuthRightPanel from "@/components/ui/authentication.right.design";
 
 interface PageProps {
   params: Promise<{ email: string }>;

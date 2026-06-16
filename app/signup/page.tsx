@@ -10,8 +10,8 @@ import { classnames } from "@/styles/input.styles";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import AuthLeftPanel from "@/components/authentication.left.design";
-import AuthRightPanel from "@/components/authentication.right.design";
+import AuthLeftPanel from "@/components/ui/authentication.left.design";
+import AuthRightPanel from "@/components/ui/authentication.right.design";
 
 const PASSWORD_MIN_LENGTH = 8;
 

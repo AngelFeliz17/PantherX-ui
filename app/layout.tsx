@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
+import { getMe } from "@/lib/api/user";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -12,6 +13,7 @@ const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700"],
 });
 
+const user = await getMe() ?? null;
 
 export default function RootLayout({
   children,
