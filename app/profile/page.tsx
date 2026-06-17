@@ -11,6 +11,8 @@ import {
   UserPen,
 } from "lucide-react";
 
+import EditProfileModal from "@/components/ui/edit-profile-modal";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -43,7 +45,7 @@ export default function ProfilePage() {
           priority
           className="object-cover"
           fill
-          sizes="(max-width: 768px) 100vw, 50vw"
+          sizes="2160px"
         />
 
         <div className="absolute inset-0 bg-black/35" />
@@ -64,6 +66,7 @@ export default function ProfilePage() {
                       alt="Profile"
                       fill
                       className="object-cover"
+                      sizes="768px"
                     />
                   </div>
 
@@ -102,14 +105,10 @@ export default function ProfilePage() {
 
                 {/* Actions */}
                 <div className="absolute right-5 top-5 flex items-center gap-2 sm:right-8 sm:top-8">
-                  <Button
-                    size="sm"
-                    className="h-9 rounded-full px-4 shadow-sm"
-                  >
-                    <UserPen className="mr-2 h-4 w-4" />
-                    <span className="hidden sm:inline">Edit Profile</span>
-                  </Button>
-
+                  <div className="flex items-center gap-2">
+                    <UserPen className="h-4 w-4 sm:hidden" />
+                    <EditProfileModal user={user} />
+                  </div>
                   <Button
                     onClick={handleSignOut}
                     size="icon"
