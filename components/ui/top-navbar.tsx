@@ -1,3 +1,4 @@
+"use client"
 import Link from "next/link";
 import {
   LogIn,
@@ -7,12 +8,10 @@ import {
   User,
 } from "lucide-react";
 import { Button } from "./button";
+import { useUser } from "@/context/user-context";
 
-interface UserProps {
-    isAuthenticated: boolean;
-}
-
-export default function TopNavBar({ isAuthenticated }: UserProps) {
+export default function TopNavBar() {
+  const user = useUser();
     return (
         <nav className="absolute top-0 z-20 w-full border-b border-white/10">
           <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-6">
@@ -29,7 +28,7 @@ export default function TopNavBar({ isAuthenticated }: UserProps) {
               </span>
             </Link>
 
-            {!isAuthenticated ? (
+            {!!user === false ? (
               <div className="hidden md:flex items-center gap-3">
                 <Button
                   variant="ghost"
@@ -80,7 +79,7 @@ export default function TopNavBar({ isAuthenticated }: UserProps) {
                     className="flex items-center gap-2"
                   >
                     <Package className="h-4 w-4" />
-                    My Listings
+                    Listings
                   </Link>
                 </Button>
 

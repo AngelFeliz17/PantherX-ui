@@ -12,6 +12,10 @@ export const logIn = async (data: Omit<SignUpData, "name">) => {
     return res.data;
 }
 
+export const logOut = async () => {
+    await api.post('/auth/logout');
+}
+
 export const verifyAccount = async (data: VerifyCodeData) => {
     const res = await api.put(`/auth/verify-code`, data);
     return res.data;

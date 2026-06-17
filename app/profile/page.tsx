@@ -6,9 +6,9 @@ import {
   Package,
   Heart,
   Star,
-  Settings,
-  Pencil,
   MapPin,
+  LogOut,
+  UserPen,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -22,40 +22,17 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { useUser } from "../context/user-context";
-
-const listings = [
-  {
-    id: 1,
-    title: "MacBook Air M2",
-    price: "$700",
-    image:{
-      src: "/images/UNI-Basketball-Court.jpg"
-    },
-    location: "Cedar Falls, IA",
-  },
-  {
-    id: 2,
-    title: "Calculus Textbook",
-    price: "$40",
-    image:{
-      src: "/images/UNI-Basketball-Court.jpg"
-    },
-    location: "UNI Campus",
-  },
-  {
-    id: 3,
-    title: "Mini Fridge",
-    price: "$80",
-    image:{
-      src: "/images/UNI-Basketball-Court.jpg"
-    },
-    location: "Dorms",
-  },
-];
+import { useUser } from "@/context/user-context";
+import { logOut } from "@/lib/api/auth";
 
 export default function ProfilePage() {
   const user = useUser();
+
+  const handleSignOut = async () => {
+    await logOut();
+    window.location.replace("/login");
+  }
+  
   return (
     <main className="min-h-screen bg-slate-50">
       {/* Banner */}
@@ -63,8 +40,10 @@ export default function ProfilePage() {
         <Image
           src="/images/UNI-Basketball-Court.jpg"
           alt="Campus Banner"
-          fill
+          priority
           className="object-cover"
+          fill
+          sizes="(max-width: 768px) 100vw, 50vw"
         />
 
         <div className="absolute inset-0 bg-black/35" />
@@ -73,9 +52,9 @@ export default function ProfilePage() {
       <div className="mx-auto max-w-7xl px-6 pb-16">
         {/* Profile Header */}
         <div className="relative -mt-20">
-          <Card className="overflow-visible rounded-3xl shadow-lg">
-            <CardContent className="p-8">
-              <div className="flex flex-col gap-8 lg:flex-row lg:items-center lg:justify-between">
+          <Card className="relative overflow-visible rounded-3xl shadow-lg">
+            <CardContent className="relative p-8 pt-14 sm:pt-8">
+              <div>
                 {/* Left */}
                 <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
                   {/* Avatar */}
@@ -98,9 +77,12 @@ export default function ProfilePage() {
                       @angelfeliz
                     </p> */}
 
-                    <p className="mt-4 max-w-xl text-sm text-slate-600">
-                      {user?.bio}
-                    </p>
+                    {
+                        user?.bio && 
+                        <p className="mt-4 max-w-xl text-sm text-slate-600">
+                            {user?.bio}
+                        </p>
+                    }
 
                     <div className="mt-5 flex flex-wrap gap-3">
                        { user?.graduationYear && 
@@ -112,21 +94,29 @@ export default function ProfilePage() {
 
                       <div className="flex items-center gap-2 rounded-full bg-slate-100 px-4 py-2 text-sm">
                         <MapPin className="h-4 w-4" />
-                        University of Northern Iowa
+                        {user?.university?.name}
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-3">
-                  <Button>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    Edit Profile
+                <div className="absolute right-5 top-5 flex items-center gap-2 sm:right-8 sm:top-8">
+                  <Button
+                    size="sm"
+                    className="h-9 rounded-full px-4 shadow-sm"
+                  >
+                    <UserPen className="mr-2 h-4 w-4" />
+                    <span className="hidden sm:inline">Edit Profile</span>
                   </Button>
 
-                  <Button variant="outline" size="icon">
-                    <Settings className="h-5 w-5" />
+                  <Button
+                    onClick={handleSignOut}
+                    size="icon"
+                    variant="ghost"
+                    className="h-9 w-9 rounded-full text-red-500 hover:bg-red-50 hover:text-red-600"
+                  >
+                    <LogOut className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
@@ -183,15 +173,16 @@ export default function ProfilePage() {
 
           {/* Listings */}
           <TabsContent value="listings">
-            <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {listings.map((listing) => (
+            {
+                user?.listings?.length >= 1 ? <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {user?.listings?.map((listing) => (
                 <Card
                   key={listing.id}
                   className="overflow-hidden rounded-3xl transition hover:-translate-y-1 hover:shadow-xl"
                 >
                   <div className="relative h-56">
                     <Image
-                      src={listing.image.src}
+                      src={listing?.images?.url}
                       alt={listing.title}
                       fill
                       className="object-cover -mt-6"
@@ -208,12 +199,19 @@ export default function ProfilePage() {
                     </p>
 
                     <p className="text-sm text-muted-foreground">
-                      {listing.location}
+                      {listing.description}
                     </p>
                   </CardContent>
                 </Card>
               ))}
-            </div>
+            </div> : <Card className="mt-8 rounded-3xl">
+              <CardContent className="p-8">
+                <p className="text-muted-foreground">
+                  No listings yet
+                </p>
+              </CardContent>
+            </Card>
+            }
           </TabsContent>
 
           {/* Reviews */}
@@ -221,7 +219,7 @@ export default function ProfilePage() {
             <Card className="mt-8 rounded-3xl">
               <CardContent className="p-8">
                 <p className="text-muted-foreground">
-                  No reviews yet.
+                  No reviews yet
                 </p>
               </CardContent>
             </Card>
@@ -232,7 +230,7 @@ export default function ProfilePage() {
             <Card className="mt-8 rounded-3xl">
               <CardContent className="p-8">
                 <p className="text-muted-foreground">
-                  No saved listings.
+                  No saved listings
                 </p>
               </CardContent>
             </Card>
@@ -248,7 +246,7 @@ export default function ProfilePage() {
                   </p>
 
                   <p className="font-medium">
-                    University of Northern Iowa
+                    {user?.university?.name}
                   </p>
                 </div>
 
@@ -257,9 +255,11 @@ export default function ProfilePage() {
                     Graduation Year
                   </p>
 
-                  <p className="font-medium">
-                    Class of 2028
+                  {
+                    user?.graduationYear && <p className="font-medium">
+                    Class of {user.graduationYear}
                   </p>
+                  }
                 </div>
 
                 <div>
@@ -267,9 +267,13 @@ export default function ProfilePage() {
                     Joined
                   </p>
 
-                  <p className="font-medium">
-                    June 2026
-                  </p>
+                  {
+                    user?.createdAt && (
+                      <p className="font-medium">
+                        {new Date(user.createdAt).toDateString()}
+                      </p>
+                    )
+                  }
                 </div>
               </CardContent>
             </Card>

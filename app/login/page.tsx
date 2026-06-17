@@ -19,27 +19,6 @@ interface AuthError {
   code?: string;
 }
 
-type LoginResponse = {
-  access_token?: string;
-};
-
-function saveAccessTokenCookie(response: LoginResponse) {
-  const token = response.access_token;
-
-  if (!token) {
-    return;
-  }
-
-  const secure = window.location.protocol === "https:" ? "; Secure" : "";
-  document.cookie = [
-    `access_token=${encodeURIComponent(token)}`,
-    "Path=/",
-    "Max-Age=604800",
-    "SameSite=Lax",
-    secure,
-  ].join("; ");
-}
-
 export default function LogIn() {
   const router = useRouter();
 
@@ -58,8 +37,7 @@ export default function LogIn() {
     const password = formData.get("password") as string;
 
     try {
-      const response = await logIn({ email, password });
-      saveAccessTokenCookie(response);
+      await logIn({ email, password });
       window.location.replace("/");
     } catch (error: unknown) {
       if (axios.isAxiosError<AuthError>(error)) {
