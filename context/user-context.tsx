@@ -1,6 +1,21 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { getMeFresh } from "@/lib/api/user";
+
+type Listing = [{
+  id: string;
+  title: string;
+  description: string;
+  price: string;
+  status: string;
+  condition: string;
+  images: {
+    id: string;
+    url: string;
+    order: number;
+  }
+}]
 
 export type User = {
   id: string;
@@ -14,27 +29,16 @@ export type User = {
     id: string;
     name: string;
   }
-  listings?: [{
-    id: string;
-    title: string;
-    description: string;
-    price: string;
-    status: string;
-    condition: string;
-    images: {
-      id: string;
-      url: string;
-      order: number;
-    }
-  }];
-  // favorite: {
-  //   listing: {
-  //     listing
-  //   }
-  // }
+  listings?: Listing;
+  favorite?: [{
+    listing: Listing
+  }]
 } | null;
 
 const UserContext = createContext<User>(null);
+const UserActionsContext = createContext<{
+  refreshUser: () => Promise<User>;
+} | null>(null);
 
 export function UserProvider({
   user,
@@ -43,14 +47,37 @@ export function UserProvider({
   user: User;
   children: React.ReactNode;
 }) {
+  const [currentUser, setCurrentUser] = useState(user);
+
+  useEffect(() => {
+    setCurrentUser(user);
+  }, [user]);
+
+  const refreshUser = useCallback(async () => {
+    const freshUser = await getMeFresh();
+    setCurrentUser(freshUser);
+    return freshUser;
+  }, []);
   
   return (
-    <UserContext.Provider value={user}>
-      {children}
+    <UserContext.Provider value={currentUser}>
+      <UserActionsContext.Provider value={{ refreshUser }}>
+        {children}
+      </UserActionsContext.Provider>
     </UserContext.Provider>
   );
 }
 
 export function useUser() {
   return useContext(UserContext);
+}
+
+export function useUserActions() {
+  const actions = useContext(UserActionsContext);
+
+  if (!actions) {
+    throw new Error("useUserActions must be used within a UserProvider");
+  }
+
+  return actions;
 }

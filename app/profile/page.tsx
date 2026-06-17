@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
   Calendar,
@@ -9,6 +10,7 @@ import {
   MapPin,
   LogOut,
   UserPen,
+  Pencil,
 } from "lucide-react";
 
 import EditProfileModal from "@/components/ui/edit-profile-modal";
@@ -29,26 +31,67 @@ import { logOut } from "@/lib/api/auth";
 
 export default function ProfilePage() {
   const user = useUser();
+  const [bannerSrc, setBannerSrc] = useState("/images/UNI-Basketball-Court.jpg");
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (bannerSrc.startsWith("blob:")) {
+        URL.revokeObjectURL(bannerSrc);
+      }
+    };
+  }, [bannerSrc]);
 
   const handleSignOut = async () => {
     await logOut();
     window.location.replace("/login");
   }
   
+  const soldCount = user?.listings?.filter((l) => l.status === "SOLD").length ?? 0;
+  
   return (
     <main className="min-h-screen bg-slate-50">
       {/* Banner */}
-      <section className="relative h-72 w-full overflow-hidden">
+      <section className="group relative h-72 w-full overflow-hidden">
         <Image
-          src="/images/UNI-Basketball-Court.jpg"
+          src={bannerSrc}
           alt="Campus Banner"
           priority
           className="object-cover"
           fill
           sizes="2160px"
+          unoptimized={bannerSrc.startsWith("blob:")}
+        />
+
+        <input
+          ref={bannerInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+
+            if (file) {
+              setBannerSrc(URL.createObjectURL(file));
+            }
+
+            e.target.value = "";
+          }}
         />
 
         <div className="absolute inset-0 bg-black/35" />
+
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          <Button
+            type="button"
+            variant="secondary"
+            className="rounded-full bg-white/95 px-4 text-slate-900 shadow-lg hover:bg-white"
+            onClick={() => bannerInputRef.current?.click()}
+          >
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit Banner
+          </Button>
+        </div>
       </section>
 
       <div className="mx-auto max-w-7xl px-6 pb-16">
@@ -124,7 +167,7 @@ export default function ProfilePage() {
               <div className="mt-10 grid gap-4 md:grid-cols-4">
                 <StatCard
                   icon={<Package className="h-5 w-5" />}
-                  value="14"
+                  value={user?.listings?.length || 0}
                   label="Listings"
                 />
 
@@ -136,13 +179,13 @@ export default function ProfilePage() {
 
                 <StatCard
                   icon={<Heart className="h-5 w-5" />}
-                  value="23"
+                  value={user?.favorite?.length || 0}
                   label="Saved"
                 />
 
                 <StatCard
                   icon={<Package className="h-5 w-5" />}
-                  value="31"
+                  value={soldCount}
                   label="Sold"
                 />
               </div>
@@ -173,7 +216,7 @@ export default function ProfilePage() {
           {/* Listings */}
           <TabsContent value="listings">
             {
-                user?.listings?.length >= 1 ? <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                (user?.listings?.length ?? 0) >= 1 ? <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {user?.listings?.map((listing) => (
                 <Card
                   key={listing.id}
@@ -285,7 +328,7 @@ export default function ProfilePage() {
 
 interface StatCardProps {
   icon: React.ReactNode;
-  value: string;
+  value: string | number;
   label: string;
 }
 

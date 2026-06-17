@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -12,49 +14,105 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { AlertTriangle, Loader2 } from "lucide-react";
 import { classnames } from "@/styles/input.styles";
+import { deleteAccount, update } from "@/lib/api/user";
+import { logOut } from "@/lib/api/auth";
+import { useUserActions } from "@/context/user-context";
 
-interface EditProfileModalProps {
-  user: {
+export interface EditProfileModalProps {
+  user: { 
     name?: string;
-    studentEmail?: string;
+    email?: string;
     bio?: string;
-    graduationYear?: string;
+    graduationYear?: string | number;
   } | null;
 }
 
-export default function EditProfileModal({ user }: EditProfileModalProps) {
+interface Response {
+  data: {
+    message: string;
+    data: EditProfileModalProps;
+  };
+  status: number;
+}
+
+export default function EditProfileModal({ user }: EditProfileModalProps ) {
+  const router = useRouter();
+  const { refreshUser } = useUserActions();
   const [name, setName] = useState(user?.name ?? "");
-  const [email, setEmail] = useState(user?.studentEmail ?? "");
+  const [email, setEmail] = useState(user?.email ?? "");
   const [bio, setBio] = useState(user?.bio ?? "");
   const [graduationYear, setGraduationYear] = useState(
     user?.graduationYear ?? ""
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const [message, setMessage] = useState<Response | null>();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // TODO: connect to update profile endpoint
-    console.log({
-      name,
-      email,
-      bio,
-      graduationYear,
-    });
+  useEffect(() => {
+    setName(user?.name ?? "");
+    setEmail(user?.email ?? "");
+    setBio(user?.bio ?? "");
+    setGraduationYear(user?.graduationYear ?? "");
+  }, [user]);
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await update({
+        name,
+        email,
+        bio,
+        graduationYear,
+      });
+      setMessage(response);
+      await refreshUser();
+      router.refresh();
+    } catch(error) {
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.message ?? error.message
+        : "Unable to update profile.";
+
+      setMessage({
+        data: {
+          message,
+          data: { user: null },
+        },
+        status: 500,
+      });
+    }
   };
 
+  const handleDeleteAccount = async () => {
+    setIsDeleting(true);
+    try {
+      await deleteAccount();
+      await logOut();
+      window.location.replace("/login");
+    } finally {
+      setIsDeleting(false);
+      setDeleteDialogOpen(false);
+    }
+  };
+
+  const handleOpenModal = (open: boolean) => {
+    setIsModalOpen(open);
+    setMessage(null);
+  };
+   
   return (
-    <Dialog>
+    <Dialog open={isModalOpen} onOpenChange={handleOpenModal}>
       <DialogTrigger asChild>
-        <Button
-          size="sm"
-          className="h-9 rounded-full px-4 shadow-sm"
-        >
+        <Button size="sm" className="h-9 rounded-full px-4 shadow-sm">
           Edit Profile
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-xl rounded-3xl border-0 p-0 overflow-hidden">
+      <DialogContent className="max-h-[90vh] w-[95vw] sm:max-w-xl rounded-3xl border-0 p-0 overflow-hidden">
         <div className="border-b px-6 py-5">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold tracking-tight">
@@ -66,92 +124,177 @@ export default function EditProfileModal({ user }: EditProfileModalProps) {
           </DialogHeader>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="space-y-5 px-6 py-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-                className={classnames.input}
-              />
+      {/* Form content */}
+        <div className="max-h-[70vh] overflow-y-auto">
+          <form onSubmit={handleUpdate}>
+            <div className="space-y-5 px-6 py-6">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Angel Feliz"
+                  className={classnames.input}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="student@uni.edu"
+                  className={classnames.input}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea
+                  id="bio"
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  placeholder="Tell students a little about yourself..."
+                  className={classnames.input}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="graduationYear">Graduation Year</Label>
+                <Input
+                  id="graduationYear"
+                  type="number"
+                  value={graduationYear}
+                  onChange={(e) => setGraduationYear(e.target.value)}
+                  placeholder="2027"
+                  min={1876}
+                  className={classnames.input}
+                />
+              </div>
+              {message && (
+                <div
+                  className={`rounded-xl p-4 ${
+                    message.status === 200
+                      ? "bg-green-50"
+                      : "bg-red-50"
+                  }`}
+                >
+                  <p
+                    className={`text-sm first-letter:uppercase ${
+                      message.status === 200
+                        ? "text-green-700"
+                        : "text-red-700"
+                    }`}
+                  >
+                    {message?.data?.message}
+                  </p>
+                </div>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="student@uni.edu"
-                className={classnames.input}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                placeholder="Tell students a little about yourself..."
-                className={classnames.input}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="graduationYear">Graduation Year</Label>
-              <Input
-                id="graduationYear"
-                type="number"
-                value={graduationYear}
-                onChange={(e) => setGraduationYear(e.target.value)}
-                placeholder="2027"
-                min={1876}
-                className={classnames.input}
-              />
-            </div>
-          </div>
-
-          <div className="border-t px-6 py-5">
-            <div className="rounded-2xl border border-red-200 bg-red-50 p-4">
-              <h3 className="text-sm font-semibold text-red-600">
-                Delete Account
-              </h3>
-
-              <p className="mt-1 text-sm text-muted-foreground">
-                Permanently delete your account and all associated data. This account cannot be restored.
-              </p>
+            <div className="border-t px-6 py-5">
+              <div className=" flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-red-600">
+                  Danger Zone
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Permanently delete your account.
+                </p>
+              </div>
 
               <Button
                 type="button"
-                variant="destructive"
-                className="mt-4 rounded-xl"
-                onClick={() => {
-                  const confirmed = window.confirm(
-                    "Are you sure? This account cannot be restored and all your data will be permanently deleted."
-                  );
-
-                  if (confirmed) {
-                    console.log("Delete account");
-                  }
-                }}
+                variant="ghost"
+                size="sm"
+                className="text-red-500 hover:bg-red-50 hover:text-red-600"
+                onClick={() => setDeleteDialogOpen(true)}
               >
-                Delete Account
+                Delete
               </Button>
             </div>
+              <div className="mt-5 flex justify-end">
+                <Button type="submit" className="rounded-xl px-6">
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </DialogContent>
 
-            <div className="mt-5 flex justify-end">
-              <Button type="submit" className="rounded-xl px-6">
-                Save Changes
+      {/* Delete confirmation dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md rounded-3xl border-0 p-0 overflow-hidden">
+          <div className="px-6 py-6">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+              <AlertTriangle className="h-6 w-6 text-red-600" />
+            </div>
+
+            <DialogHeader className="mt-4 text-left">
+              <DialogTitle className="text-lg font-semibold">
+                Delete your account?
+              </DialogTitle>
+              <p className="mt-1 text-sm text-muted-foreground">
+                This will permanently delete your account, listings, and
+                messages. This action{" "}
+                <span className="font-medium text-foreground">
+                  cannot be undone
+                </span>
+                .
+              </p>
+            </DialogHeader>
+
+            <div className="mt-4 space-y-2">
+              <Label htmlFor="confirm-delete" className="text-sm">
+                Type <span className="font-semibold">DELETE</span> to confirm
+              </Label>
+              <Input
+                id="confirm-delete"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="DELETE"
+                className={classnames.input}
+                autoComplete="off"
+              />
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl"
+                onClick={() => {
+                  setDeleteDialogOpen(false);
+                  setDeleteConfirmText("");
+                }}
+                disabled={isDeleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                className="rounded-lg"
+                disabled={deleteConfirmText !== "DELETE" || isDeleting}
+                onClick={handleDeleteAccount}
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  "Delete Account"
+                )}
               </Button>
             </div>
           </div>
-        </form>
-      </DialogContent>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
