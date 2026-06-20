@@ -160,6 +160,7 @@ export default function ProfilePage() {
             </div>
           ) : (
             <Button
+              hidden={!!user === false}
               type="button"
               variant="secondary"
               size="icon"

@@ -178,6 +178,7 @@ export default function EditProfileModal({ user }: EditProfileModalProps ) {
                   onChange={(e) => setGraduationYear(e.target.value)}
                   placeholder="2027"
                   min={1876}
+                  max={2100}
                   className={classnames.input}
                 />
               </div>

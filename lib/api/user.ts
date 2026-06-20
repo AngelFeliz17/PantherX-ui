@@ -74,3 +74,8 @@ export const updateProfileBanner = async (file: File) => {
 
   return status;
 }
+
+export const findUserProfile = async (id: string) => {
+  const { data } = await api.get(`/users/${id}`);
+  return data;
+}
