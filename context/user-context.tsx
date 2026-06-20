@@ -10,18 +10,27 @@ type Listing = [{
   price: string;
   status: string;
   condition: string;
-  images: {
+  images: [{
     id: string;
     url: string;
     order: number;
-  }
+  }]
 }]
 
 export type User = {
   id: string;
   email: string;
   name: string;
-  profilePicture?: string;
+  profilePicture?: {
+    id: string;
+    url: string;
+    order: number;
+  };
+  banner?: {
+    id: string;
+    url: string;
+    order: number;
+  }
   bio?: string;
   graduationYear?: string;
   createdAt: Date;

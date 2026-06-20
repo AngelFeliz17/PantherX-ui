@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, Loader2, UserPen } from "lucide-react";
 import { classnames } from "@/styles/input.styles";
 import { deleteAccount, update } from "@/lib/api/user";
 import { logOut } from "@/lib/api/auth";
@@ -107,12 +107,19 @@ export default function EditProfileModal({ user }: EditProfileModalProps ) {
   return (
     <Dialog open={isModalOpen} onOpenChange={handleOpenModal}>
       <DialogTrigger asChild>
-        <Button size="sm" className="h-9 rounded-full px-4 shadow-sm">
-          Edit Profile
+        <Button
+          size="sm"
+          className="h-9 rounded-full px-3 sm:px-4 shadow-sm"
+        >
+          <UserPen className="h-4 w-4 sm:mr-2" />
+          <span className="hidden sm:inline">Edit Profile</span>
         </Button>
       </DialogTrigger>
 
-      <DialogContent className="max-h-[90vh] w-[95vw] sm:max-w-xl rounded-3xl border-0 p-0 overflow-hidden">
+      <DialogContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        className="max-h-[90vh] w-[95vw] sm:max-w-xl rounded-3xl border-0 p-0 overflow-hidden"
+      >
         <div className="border-b px-6 py-5">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold tracking-tight">

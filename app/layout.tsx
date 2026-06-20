@@ -5,6 +5,7 @@ import { UserProvider } from "../context/user-context";
 import { cookies } from "next/headers";
 import TopNavBar from "@/components/ui/top-navbar";
 import BottomNavBar from "@/components/ui/bottom-navbar";
+import type { User } from "@/context/user-context";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -17,7 +18,14 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   await cookies()
-  const user = await getMe();
+  let user: User = null;
+
+  try {
+    user = await getMe();
+  } catch (error) {
+    console.error("Failed to load current user", error);
+  }
+
   return (
     <html
       lang="en"
