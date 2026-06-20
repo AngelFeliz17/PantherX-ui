@@ -2,13 +2,25 @@
 
 import { Listing } from "@/context/user-context";
 import { findAll } from "@/lib/api/listings";
-import { Search, SlidersHorizontal, Plus } from "lucide-react";
+import { Search, SlidersHorizontal, Plus, ChevronDown, X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 
 export default function ListingsPage() {
   const [listings, setListings] = useState<Listing[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [conditionFilter, setConditionFilter] = useState("");
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
   useEffect(() => {
     const findAllListings = async () => {
       const result = await findAll();
@@ -17,6 +29,33 @@ export default function ListingsPage() {
 
     findAllListings();
   }, [])
+
+  const filteredListings = listings.filter((listing) => {
+    const price = Number(listing.price);
+
+    const matchesCondition =
+      !conditionFilter ||
+      conditionFilter === "all" ||
+      listing.condition === conditionFilter;
+
+    const matchesMinPrice =
+      !minPrice || price >= Number(minPrice);
+
+    const matchesMaxPrice =
+      !maxPrice || price <= Number(maxPrice);
+
+    const matchesCategory =
+      !categoryFilter ||
+      categoryFilter === "all" ||
+      ("category" in listing && listing.category?.name === categoryFilter);
+
+    return (
+      matchesCondition &&
+      matchesMinPrice &&
+      matchesMaxPrice &&
+      matchesCategory
+    );
+  });
 
   return (
     <main className="min-h-screen bg-muted/30 px-4 pb-6 pt-10 sm:px-6 lg:px-8">
@@ -48,15 +87,134 @@ export default function ListingsPage() {
               />
             </div>
 
-            <button className="flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 transition hover:bg-muted">
-              <SlidersHorizontal className="h-4 w-4" />
-              Filters
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setShowFilters((prev) => !prev)}
+                className="flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 transition hover:bg-muted"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                Filters
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${showFilters ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {showFilters && (
+                <div className="absolute right-0 top-full z-20 mt-3 w-[360px] rounded-3xl border bg-background p-6 shadow-2xl">
+                  <div className="mb-5 flex items-center justify-between">
+                    <h3 className="text-lg font-semibold">Filters</h3>
+                    <button
+                      onClick={() => setShowFilters(false)}
+                      className="rounded-full p-2 transition hover:bg-muted"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  <div className="space-y-5">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium">
+                        Category
+                      </label>
+                      <Select
+                        value={categoryFilter}
+                        onValueChange={setCategoryFilter}
+                      >
+                        <SelectTrigger className="w-full py-5 rounded-2xl border">
+                          <SelectValue placeholder="All Categories" />
+                        </SelectTrigger>
+
+                        <SelectContent className="rounded-2xl">
+                          <SelectItem value="all">All Categories</SelectItem>
+                          <SelectItem value="Electronics">Electronics</SelectItem>
+                          <SelectItem value="Textbooks">Textbooks</SelectItem>
+                          <SelectItem value="Furniture">Furniture</SelectItem>
+                          <SelectItem value="Clothing">Clothing</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium">
+                        Condition
+                      </label>
+                      <Select
+                        value={conditionFilter}
+                        onValueChange={setConditionFilter}
+                      >
+                        <SelectTrigger className="w-full p-5 rounded-2xl border">
+                          <SelectValue placeholder="All Conditions" />
+                        </SelectTrigger>
+
+                        <SelectContent className="rounded-2xl">
+                          <SelectItem value="all">All Conditions</SelectItem>
+                          <SelectItem value="NEW">New</SelectItem>
+                          <SelectItem value="LIKE_NEW">Like New</SelectItem>
+                          <SelectItem value="GOOD">Good</SelectItem>
+                          <SelectItem value="FAIR">Fair</SelectItem>
+                          <SelectItem value="POOR">Poor</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-medium">
+                        Price Range
+                      </label>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <input
+                            type="number"
+                            value={minPrice}
+                            onChange={(e) => setMinPrice(e.target.value)}
+                            placeholder="Min $"
+                            className="w-full rounded-2xl border bg-background px-4 py-3 outline-none transition focus:ring-1 focus:ring-primary/20"
+                          />
+                        </div>
+                        <div>
+                          <input
+                            type="number"
+                            value={maxPrice}
+                            onChange={(e) => setMaxPrice(e.target.value)}
+                            placeholder="Max $"
+                            className="w-full rounded-2xl border bg-background px-4 py-3 outline-none transition focus:ring-1 focus:ring-primary/20"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCategoryFilter("");
+                          setConditionFilter("");
+                          setMinPrice("");
+                          setMaxPrice("");
+                        }}
+                        className="flex-1 rounded-2xl border px-4 py-3 font-medium transition hover:bg-muted"
+                      >
+                        Reset
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowFilters(false)}
+                        className="flex-1 rounded-2xl bg-primary px-4 py-3 font-medium text-primary-foreground transition hover:opacity-90"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </section>
 
         <section>
-          {listings.length === 0 ? (
+          {filteredListings.length === 0 ? (
             <div className="flex min-h-[300px] flex-col items-center justify-center rounded-3xl border border-dashed bg-background p-10 text-center shadow-sm">
               <h2 className="text-xl font-semibold">No listings yet</h2>
               <p className="mt-2 max-w-sm text-sm text-muted-foreground">
@@ -73,7 +231,7 @@ export default function ListingsPage() {
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-              {listings.map((listing) => (
+              {filteredListings.map((listing) => (
                 <article
                   key={listing.id}
                   className="group overflow-hidden rounded-3xl border bg-background shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg"
