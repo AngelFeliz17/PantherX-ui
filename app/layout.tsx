@@ -32,9 +32,11 @@ export default async function RootLayout({
       className={`${poppins.className} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <UserProvider user={user} >
+        <UserProvider user={user}>
           <TopNavBar />
-          {children}
+          <main className="flex-1 pt-16 md:pt-20">
+            {children}
+          </main>
           <BottomNavBar />
         </UserProvider>
         </body>

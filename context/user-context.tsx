@@ -3,19 +3,28 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { getMeFresh } from "@/lib/api/user";
 
-type Listing = [{
+export type Listing = {
   id: string;
   title: string;
   description: string;
   price: string;
   status: string;
   condition: string;
-  images: [{
+  images: {
     id: string;
     url: string;
     order: number;
-  }]
-}]
+  }[]
+  seller: {
+    id: string;
+    name: string;
+    profilePicture?: {
+    id: string;
+    url: string;
+    order: number;
+  }; 
+  }
+}
 
 export type User = {
   id: string;
@@ -38,10 +47,10 @@ export type User = {
     id: string;
     name: string;
   }
-  listings?: Listing;
-  favorite?: [{
+  listings?: Listing[];
+  favorite?: {
     listing: Listing
-  }]
+  }[]
 } | null;
 
 const UserContext = createContext<User>(null);

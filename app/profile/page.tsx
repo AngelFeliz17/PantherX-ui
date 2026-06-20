@@ -9,7 +9,6 @@ import {
   Star,
   MapPin,
   LogOut,
-  UserPen,
   Pencil,
   Check,
   X,
