@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   Calendar,
@@ -27,6 +27,7 @@ import { useRouter } from "next/navigation";
 import { use
 
  } from "react";
+import NotFound from "@/app/not-found";
 type Props = {
     params: Promise<{ id: string }>;
 }
@@ -39,18 +40,30 @@ export default function UserProfilePageById({ params }: Props) {
   const router = useRouter();
   const { id } = use(params);
   const [user, setUser] = useState<User | null>(null);
+  const [userNotFound, setUserNotFound] = useState(false);
 
   useEffect(() => {
       const find = async () => {
-        const result = await findUserProfile(id);
-        if(loggedUser?.id === result.id) return router.replace('/profile');
-        setUser(result)
+        try {
+          const result = await findUserProfile(id);
+          if(loggedUser?.id === result.data.id) return router.replace('/profile');
+          setUser(result.data);
+        } catch (error: any) {
+          if (error?.status === 404 || error?.response?.status === 404) {
+            setUserNotFound(true);
+            return;
+          }
+        }
       };
 
     find()
   }, [id])
 
   const soldCount = user?.listings?.filter((l) => l.status === "SOLD").length ?? 0;
+
+  if (userNotFound) {
+    return <NotFound />;
+  }
 
   return (
     <main className="min-h-screen bg-slate-50">
