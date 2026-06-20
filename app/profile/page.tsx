@@ -31,9 +31,11 @@ import {
 import { useUser, useUserActions } from "@/context/user-context";
 import { logOut } from "@/lib/api/auth";
 import { updateProfileBanner, updateProfilePicture } from "@/lib/api/user";
+import NotLoggedUser from "@/components/ui/not-logged-user";
 
 export default function ProfilePage() {
   const user = useUser();
+
   const { refreshUser } = useUserActions();
 
   const [bannerSrc, setBannerSrc] = useState(user?.banner?.url || "/images/default-banner.png");
@@ -177,7 +179,8 @@ export default function ProfilePage() {
         {/* Profile Header */}
         <div className="relative -mt-20">
           <Card className="relative overflow-visible rounded-3xl shadow-lg">
-            <CardContent className="relative p-8 pt-14 sm:pt-8">
+        {
+          !user ? <NotLoggedUser /> : <CardContent className="relative p-8 pt-14 sm:pt-8">
               <div>
                 {/* Left */}
                 <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
@@ -344,6 +347,7 @@ export default function ProfilePage() {
                 />
               </div>
             </CardContent>
+        }
           </Card>
         </div>
 
