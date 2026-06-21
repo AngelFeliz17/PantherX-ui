@@ -1,8 +1,10 @@
-"use client"
+"use client";
 
-import { Listing } from "@/context/user-context";
-import { findAll } from "@/lib/api/listings";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { Search, SlidersHorizontal, Plus, ChevronDown, X } from "lucide-react";
+
 import {
   Select,
   SelectContent,
@@ -10,52 +12,106 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import Image from "next/image";
+import { Listing } from "@/context/user-context";
+import { findAll } from "@/lib/api/listings";
+import { CategoryType } from "@/interfaces/category";
+import { getCategories } from "@/lib/api/categories";
+import { filterListings } from "@/lib/api/filter";
+import { FilterType } from "@/interfaces/filter";
+
+const ITEM_CONDITIONS = ["NEW", "LIKE_NEW", "GOOD", "FAIR", "POOR"] as const;
+
+const EMPTY_FILTERS = {
+  categoryId: "",
+  condition: "",
+  minPrice: "",
+  maxPrice: "",
+  search: "",
+};
+
+type Filters = typeof EMPTY_FILTERS;
+
+function toApiFilters(filters: Filters): FilterType {
+  return {
+    categoryId: filters.categoryId === "all" ? "" : filters.categoryId,
+    condition: filters.condition === "all" ? "" : filters.condition,
+    minPrice: filters.minPrice,
+    maxPrice: filters.maxPrice,
+    search: filters.search,
+  } as FilterType;
+}
 
 export default function ListingsPage() {
   const [listings, setListings] = useState<Listing[]>([]);
+  const [categories, setCategories] = useState<CategoryType[]>([]);
   const [showFilters, setShowFilters] = useState(false);
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [conditionFilter, setConditionFilter] = useState("");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
+  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [loading, setLoading] = useState(false);
+
+  const filterPanelRef = useRef<HTMLDivElement>(null);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Close the filter panel on outside click.
   useEffect(() => {
-    const findAllListings = async () => {
-      const result = await findAll();
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        filterPanelRef.current &&
+        !filterPanelRef.current.contains(e.target as Node)
+      ) {
+        setShowFilters(false);
+      }
+    }
+
+    if (showFilters) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showFilters]);
+
+  const applyFilters = useCallback(async (overrides?: Partial<Filters>) => {
+    const nextFilters = { ...filters, ...overrides };
+    setLoading(true);
+
+    try {
+      const hasActiveFilters = Object.values(toApiFilters(nextFilters)).some(
+        (value) => value !== "" && value !== undefined
+      );
+
+      const result = hasActiveFilters
+        ? await filterListings(toApiFilters(nextFilters))
+        : await findAll();
+
       setListings(result ?? []);
-    };
+    } finally {
+      setLoading(false);
+    }
+  }, [filters]);
 
-    findAllListings();
-  }, [])
+  // Initial load.
+  useEffect(() => {
+    findAll().then((result) => setListings(result ?? []));
+    getCategories().then(setCategories);
+  }, []);
 
-  const filteredListings = listings.filter((listing) => {
-    const price = Number(listing.price);
+  const handleSearchChange = (value: string) => {
+    setFilters((prev) => ({ ...prev, search: value }));
 
-    const matchesCondition =
-      !conditionFilter ||
-      conditionFilter === "all" ||
-      listing.condition === conditionFilter;
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+    searchDebounceRef.current = setTimeout(() => {
+      applyFilters({ search: value });
+    }, 300);
+  };
 
-    const matchesMinPrice =
-      !minPrice || price >= Number(minPrice);
+  const handleApplyClick = () => {
+    applyFilters();
+    setShowFilters(false);
+  };
 
-    const matchesMaxPrice =
-      !maxPrice || price <= Number(maxPrice);
-
-    const matchesCategory =
-      !categoryFilter ||
-      categoryFilter === "all" ||
-      ("category" in listing && listing.category?.name === categoryFilter);
-
-    return (
-      matchesCondition &&
-      matchesMinPrice &&
-      matchesMaxPrice &&
-      matchesCategory
-    );
-  });
+  const handleReset = () => {
+    setFilters(EMPTY_FILTERS);
+    applyFilters(EMPTY_FILTERS);
+    setShowFilters(false);
+  };
 
   return (
     <main className="min-h-screen bg-muted/30 px-4 pb-6 pt-10 sm:px-6 lg:px-8">
@@ -82,12 +138,15 @@ export default function ListingsPage() {
             <div className="flex flex-1 items-center gap-3 rounded-2xl border px-4 py-3">
               <Search className="h-5 w-5 text-muted-foreground" />
               <input
+                type="text"
+                value={filters.search}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Search for textbooks, electronics, furniture..."
                 className="w-full bg-transparent outline-none placeholder:text-muted-foreground"
               />
             </div>
 
-            <div className="relative">
+            <div className="relative" ref={filterPanelRef}>
               <button
                 onClick={() => setShowFilters((prev) => !prev)}
                 className="flex items-center justify-center gap-2 rounded-2xl border px-4 py-3 transition hover:bg-muted"
@@ -95,186 +154,218 @@ export default function ListingsPage() {
                 <SlidersHorizontal className="h-4 w-4" />
                 Filters
                 <ChevronDown
-                  className={`h-4 w-4 transition-transform ${showFilters ? "rotate-180" : ""}`}
+                  className={`h-4 w-4 transition-transform ${
+                    showFilters ? "rotate-180" : ""
+                  }`}
                 />
               </button>
 
               {showFilters && (
-                <div className="absolute right-0 top-full z-20 mt-3 w-[360px] rounded-3xl border bg-background p-6 shadow-2xl">
-                  <div className="mb-5 flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">Filters</h3>
-                    <button
-                      onClick={() => setShowFilters(false)}
-                      className="rounded-full p-2 transition hover:bg-muted"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  <div className="space-y-5">
-                    <div>
-                      <label className="mb-2 block text-sm font-medium">
-                        Category
-                      </label>
-                      <Select
-                        value={categoryFilter}
-                        onValueChange={setCategoryFilter}
-                      >
-                        <SelectTrigger className="w-full py-5 rounded-2xl border">
-                          <SelectValue placeholder="All Categories" />
-                        </SelectTrigger>
-
-                        <SelectContent className="rounded-2xl">
-                          <SelectItem value="all">All Categories</SelectItem>
-                          <SelectItem value="Electronics">Electronics</SelectItem>
-                          <SelectItem value="Textbooks">Textbooks</SelectItem>
-                          <SelectItem value="Furniture">Furniture</SelectItem>
-                          <SelectItem value="Clothing">Clothing</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <label className="mb-2 block text-sm font-medium">
-                        Condition
-                      </label>
-                      <Select
-                        value={conditionFilter}
-                        onValueChange={setConditionFilter}
-                      >
-                        <SelectTrigger className="w-full p-5 rounded-2xl border">
-                          <SelectValue placeholder="All Conditions" />
-                        </SelectTrigger>
-
-                        <SelectContent className="rounded-2xl">
-                          <SelectItem value="all">All Conditions</SelectItem>
-                          <SelectItem value="NEW">New</SelectItem>
-                          <SelectItem value="LIKE_NEW">Like New</SelectItem>
-                          <SelectItem value="GOOD">Good</SelectItem>
-                          <SelectItem value="FAIR">Fair</SelectItem>
-                          <SelectItem value="POOR">Poor</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <label className="mb-2 block text-sm font-medium">
-                        Price Range
-                      </label>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <input
-                            type="number"
-                            value={minPrice}
-                            onChange={(e) => setMinPrice(e.target.value)}
-                            placeholder="Min $"
-                            className="w-full rounded-2xl border bg-background px-4 py-3 outline-none transition focus:ring-1 focus:ring-primary/20"
-                          />
-                        </div>
-                        <div>
-                          <input
-                            type="number"
-                            value={maxPrice}
-                            onChange={(e) => setMaxPrice(e.target.value)}
-                            placeholder="Max $"
-                            className="w-full rounded-2xl border bg-background px-4 py-3 outline-none transition focus:ring-1 focus:ring-primary/20"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3 pt-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCategoryFilter("");
-                          setConditionFilter("");
-                          setMinPrice("");
-                          setMaxPrice("");
-                        }}
-                        className="flex-1 rounded-2xl border px-4 py-3 font-medium transition hover:bg-muted"
-                      >
-                        Reset
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setShowFilters(false)}
-                        className="flex-1 rounded-2xl bg-primary px-4 py-3 font-medium text-primary-foreground transition hover:opacity-90"
-                      >
-                        Apply
-                      </button>
-                    </div>
-                  </div>
-                </div>
+                <FilterPanel
+                  filters={filters}
+                  categories={categories}
+                  onChange={(partial) =>
+                    setFilters((prev) => ({ ...prev, ...partial }))
+                  }
+                  onApply={handleApplyClick}
+                  onReset={handleReset}
+                  onClose={() => setShowFilters(false)}
+                />
               )}
             </div>
           </div>
         </section>
 
         <section>
-          {filteredListings.length === 0 ? (
-            <div className="flex min-h-[300px] flex-col items-center justify-center rounded-3xl border border-dashed bg-background p-10 text-center shadow-sm">
-              <h2 className="text-xl font-semibold">No listings yet</h2>
-              <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-                Be the first student to post an item for sale on PantherX.
-              </p>
-
-              <Link
-                href="/listing/create"
-                className="mt-6 flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-primary-foreground transition hover:scale-[1.02]"
-              >
-                <Plus className="h-4 w-4" />
-                Create Listing
-              </Link>
-            </div>
+          {listings.length === 0 ? (
+            <EmptyState loading={loading} />
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
-              {filteredListings.map((listing) => (
-                <article
-                  key={listing.id}
-                  className="group overflow-hidden rounded-3xl border bg-background shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg"
-                >
-                  <div className="relative h-56 overflow-hidden bg-muted">
-                    {listing.images?.[0]?.url ? (
-                      <Image
-                        src={listing.images[0]?.url}
-                        alt={listing.title}
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
-                        unoptimized={listing.images[0].url.startsWith("blob:")}
-                      />
-                    ) : (
-                      <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-                        No Image
-                      </div>
-                    )}
-                  </div>
-                  <div className="space-y-3 p-5">
-                    <div className="flex items-start justify-between gap-3">
-                      <h2 className="line-clamp-1 font-semibold">
-                        {listing.title}
-                      </h2>
-                      <span className="font-bold text-primary">
-                        {listing.price}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                      <span>{listing.condition}</span>
-                      <span className="line-clamp-1 max-w-[120px] text-right">
-                        {listing.seller.name}
-                      </span>
-                    </div>
-                  </div>
-                </article>
+              {listings.map((listing) => (
+                <ListingCard key={listing.id} listing={listing} />
               ))}
             </div>
           )}
         </section>
       </div>
     </main>
+  );
+}
+
+interface FilterPanelProps {
+  filters: Filters;
+  categories: CategoryType[];
+  onChange: (partial: Partial<Filters>) => void;
+  onApply: () => void;
+  onReset: () => void;
+  onClose: () => void;
+}
+
+function FilterPanel({
+  filters,
+  categories,
+  onChange,
+  onApply,
+  onReset,
+  onClose,
+}: FilterPanelProps) {
+  return (
+    <div className="absolute right-0 top-full z-20 mt-3 w-[360px] rounded-3xl border bg-background p-6 shadow-2xl">
+      <div className="mb-5 flex items-center justify-between">
+        <h3 className="text-lg font-semibold">Filters</h3>
+        <button
+          onClick={onClose}
+          className="rounded-full p-2 transition hover:bg-muted"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="space-y-5">
+        <div>
+          <label className="mb-2 block text-sm font-medium">Category</label>
+          <Select
+            value={filters.categoryId}
+            onValueChange={(value) => onChange({ categoryId: value })}
+          >
+            <SelectTrigger className="w-full rounded-2xl border py-5">
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+
+            <SelectContent className="rounded-2xl">
+              <SelectItem value="all">All Categories</SelectItem>
+              {categories.map((c) => (
+                <SelectItem value={c.id} key={c.id}>
+                  {c.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium">Condition</label>
+          <Select
+            value={filters.condition}
+            onValueChange={(value) => onChange({ condition: value })}
+          >
+            <SelectTrigger className="w-full rounded-2xl border p-5">
+              <SelectValue placeholder="All Conditions" />
+            </SelectTrigger>
+
+            <SelectContent className="rounded-2xl">
+              <SelectItem value="all">All Conditions</SelectItem>
+              {ITEM_CONDITIONS.map((c) => (
+                <SelectItem value={c} key={c}>
+                  {c}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-medium">Price Range</label>
+          <div className="grid grid-cols-2 gap-3">
+            <input
+              type="number"
+              value={filters.minPrice}
+              onChange={(e) => onChange({ minPrice: e.target.value })}
+              placeholder="Min $"
+              className="w-full rounded-2xl border bg-background px-4 py-3 outline-none transition focus:ring-1 focus:ring-primary/20"
+            />
+            <input
+              type="number"
+              value={filters.maxPrice}
+              onChange={(e) => onChange({ maxPrice: e.target.value })}
+              placeholder="Max $"
+              className="w-full rounded-2xl border bg-background px-4 py-3 outline-none transition focus:ring-1 focus:ring-primary/20"
+            />
+          </div>
+        </div>
+
+        <div className="flex gap-3 pt-2">
+          <button
+            type="button"
+            onClick={onReset}
+            className="flex-1 rounded-2xl border px-4 py-3 font-medium transition hover:bg-muted"
+          >
+            Reset
+          </button>
+          <button
+            type="button"
+            onClick={onApply}
+            className="flex-1 rounded-2xl bg-primary px-4 py-3 font-medium text-primary-foreground transition hover:opacity-90"
+          >
+            Apply
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ loading }: { loading: boolean }) {
+  return (
+    <div className="flex min-h-[300px] flex-col items-center justify-center rounded-3xl border border-dashed bg-background p-10 text-center shadow-sm">
+      <h2 className="text-xl font-semibold">
+        {loading ? "Loading listings..." : "No listings yet"}
+      </h2>
+
+      {!loading && (
+        <>
+          <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+            Be the first student to post an item for sale on PantherX.
+          </p>
+
+          <Link
+            href="/listing/create"
+            className="mt-6 flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-primary-foreground transition hover:scale-[1.02]"
+          >
+            <Plus className="h-4 w-4" />
+            Create Listing
+          </Link>
+        </>
+      )}
+    </div>
+  );
+}
+
+function ListingCard({ listing }: { listing: Listing }) {
+  const imageUrl = listing.images?.[0]?.url;
+
+  return (
+    <article className="group overflow-hidden rounded-3xl border bg-background shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
+      <div className="relative h-56 overflow-hidden bg-muted">
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={listing.title}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 25vw"
+            unoptimized={imageUrl.startsWith("blob:")}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+            No Image
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-3 p-5">
+        <div className="flex items-start justify-between gap-3">
+          <h2 className="line-clamp-1 font-semibold">{listing.title}</h2>
+          <span className="font-bold text-primary">{listing.price}</span>
+        </div>
+
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>{listing.condition}</span>
+          <span className="line-clamp-1 max-w-[120px] text-right">
+            {listing.seller.name}
+          </span>
+        </div>
+      </div>
+    </article>
   );
 }
