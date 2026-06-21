@@ -114,7 +114,7 @@ export default function ListingsPage() {
   };
 
   return (
-    <main className="min-h-screen bg-muted/30 px-4 pb-6 pt-10 sm:px-6 lg:px-8">
+    <main className="min-h-screen flex-1 pt-26 bg-muted/30 px-4 pb-6 pt-10 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-8">
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-4">

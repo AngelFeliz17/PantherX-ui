@@ -34,7 +34,7 @@ export default async function RootLayout({
       <body className="min-h-full flex flex-col">
         <UserProvider user={user}>
           <TopNavBar />
-          <main className="flex-1 pt-16 md:pt-20">
+          <main>
             {children}
           </main>
           <BottomNavBar />
