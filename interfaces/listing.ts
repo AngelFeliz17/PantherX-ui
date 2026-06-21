@@ -1,8 +1,9 @@
 export interface ListingFormData {
   title: string;
-  price: number;
+  price: number | "";
   categoryId: string;
   condition: string;
-  location?: string;
-  description?: string;
+  location: string | "null";
+  description: string | "";
+  images: File[];
 }

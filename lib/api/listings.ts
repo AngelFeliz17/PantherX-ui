@@ -4,3 +4,8 @@ export const findAll = async () => {
     const { data } = await api.get('/listings');
     return data;
 }
+
+export const create = async (dataForm: FormData) => {
+    const { data, status} = await api.post('/listings', dataForm);
+    return { data, status };
+}
