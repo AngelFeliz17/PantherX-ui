@@ -126,7 +126,7 @@ export default function ListingsPage() {
             </div>
 
             <Link
-              href="/listing/create"
+              href="/listings/create"
               className="flex items-center gap-2 rounded-2xl bg-primary px-4 py-2 text-primary-foreground shadow-sm transition hover:scale-[1.02]"
             >
               <Plus className="h-4 w-4" />
@@ -257,7 +257,7 @@ function FilterPanel({
               <SelectItem value="all">All Conditions</SelectItem>
               {ITEM_CONDITIONS.map((c) => (
                 <SelectItem value={c} key={c}>
-                  {c}
+                  {c === "LIKE_NEW" ? "Like new" : c.charAt(0).toUpperCase() + c.slice(1).toLowerCase()}
                 </SelectItem>
               ))}
             </SelectContent>
