@@ -9,3 +9,8 @@ export const create = async (dataForm: FormData) => {
     const { data, status} = await api.post('/listings', dataForm);
     return { data, status };
 }
+
+export const find = async (id: string) => {
+    const { data } = await api.get(`/listings/${id}`);
+    return data;
+}

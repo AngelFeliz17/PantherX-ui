@@ -18,8 +18,9 @@ import { CategoryType } from "@/interfaces/category";
 import { getCategories } from "@/lib/api/categories";
 import { filterListings } from "@/lib/api/filter";
 import { FilterType } from "@/interfaces/filter";
+import { formatWord } from "@/lib/functions/format-word";
 
-const ITEM_CONDITIONS = ["NEW", "LIKE_NEW", "GOOD", "FAIR", "POOR"] as const;
+export const ITEM_CONDITIONS = ["NEW", "LIKE_NEW", "GOOD", "FAIR", "POOR"] as const;
 
 const EMPTY_FILTERS = {
   categoryId: "",
@@ -54,9 +55,18 @@ export default function ListingsPage() {
   // Close the filter panel on outside click.
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
+      const target = e.target as HTMLElement;
+
+      if (
+        target.closest("[data-radix-popper-content-wrapper]") ||
+        target.closest("[role='listbox']")
+      ) {
+        return;
+      }
+
       if (
         filterPanelRef.current &&
-        !filterPanelRef.current.contains(e.target as Node)
+        !filterPanelRef.current.contains(target)
       ) {
         setShowFilters(false);
       }
@@ -257,7 +267,7 @@ function FilterPanel({
               <SelectItem value="all">All Conditions</SelectItem>
               {ITEM_CONDITIONS.map((c) => (
                 <SelectItem value={c} key={c}>
-                  {c === "LIKE_NEW" ? "Like new" : c.charAt(0).toUpperCase() + c.slice(1).toLowerCase()}
+                    {formatWord(c)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -335,7 +345,8 @@ function ListingCard({ listing }: { listing: Listing }) {
   const imageUrl = listing.images?.[0]?.url;
 
   return (
-    <article className="group overflow-hidden rounded-3xl border bg-background shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
+    <Link href={`/listings/${listing.id}`}>
+    <article className="group overflow-hidden rounded-3xl border bg-background shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer">
       <div className="relative h-56 overflow-hidden bg-muted">
         {imageUrl ? (
           <Image
@@ -356,16 +367,17 @@ function ListingCard({ listing }: { listing: Listing }) {
       <div className="space-y-3 p-5">
         <div className="flex items-start justify-between gap-3">
           <h2 className="line-clamp-1 font-semibold">{listing.title}</h2>
-          <span className="font-bold text-primary">{listing.price}</span>
+          <span className="font-bold text-primary">${listing.price}</span>
         </div>
 
         <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>{listing.condition}</span>
+          <span>{formatWord(listing.condition)}</span>
           <span className="line-clamp-1 max-w-[120px] text-right">
             {listing.seller.name}
           </span>
         </div>
       </div>
     </article>
+    </Link>
   );
 }

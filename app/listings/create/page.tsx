@@ -32,14 +32,8 @@ import { CategoryType } from "@/interfaces/category";
 import { create } from "@/lib/api/listings";
 import { BackendResponse } from "@/interfaces/response";
 import imageCompression from "browser-image-compression";
-
-const ITEM_CONDITIONS = {
-  NEW: "New",
-  LIKE_NEW: "Like New",
-  GOOD: "Good",
-  FAIR: "Fair",
-  POOR: "Poor",
-};
+import { formatWord } from "@/lib/functions/format-word";
+import { ITEM_CONDITIONS } from "../page";
 
 const MAX_IMAGES = 10;
 
@@ -225,7 +219,6 @@ export default function CreateListingPage() {
     setSubmitting(true);
     try {
       const result = await create(appendedFormData);
-      console.log(result)
       setMessage(result);
       if (result.status === 201) {
         resetForm();
@@ -344,10 +337,11 @@ export default function CreateListingPage() {
                     <SelectValue placeholder="Select condition" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(ITEM_CONDITIONS).map(([value, label]) => (
-                      <SelectItem key={value} value={value}>
-                        {label}
+                    {ITEM_CONDITIONS.map(c =>(
+                      <SelectItem key={c} value={c}>
+                        {formatWord(c)}
                       </SelectItem>
+
                     ))}
                   </SelectContent>
                 </Select>
