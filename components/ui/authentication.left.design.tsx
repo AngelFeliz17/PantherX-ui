@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Feature from "@/lib/functions/feature";
+import Feature from "@/lib/hooks/feature";
 
   const title = "Buy & Sell Campus Life"
   const subtitle = "The trusted marketplace for University of Northern Iowa students."

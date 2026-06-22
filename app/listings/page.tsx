@@ -18,7 +18,7 @@ import { CategoryType } from "@/interfaces/category";
 import { getCategories } from "@/lib/api/categories";
 import { filterListings } from "@/lib/api/filter";
 import { FilterType } from "@/interfaces/filter";
-import { formatWord } from "@/lib/functions/format-word";
+import { formatWord } from "@/lib/hooks/format-word";
 
 export const ITEM_CONDITIONS = ["NEW", "LIKE_NEW", "GOOD", "FAIR", "POOR"] as const;
 

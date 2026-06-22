@@ -23,11 +23,11 @@ export type Listing = {
     url: string;
     order: number;
   }; 
-  category: {
-    id: string;
-    name: string;
-  }
-  }
+}
+category: {
+  id: string;
+  name: string;
+}
 }
 
 export type User = {

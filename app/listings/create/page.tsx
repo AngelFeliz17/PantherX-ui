@@ -32,8 +32,9 @@ import { CategoryType } from "@/interfaces/category";
 import { create } from "@/lib/api/listings";
 import { BackendResponse } from "@/interfaces/response";
 import imageCompression from "browser-image-compression";
-import { formatWord } from "@/lib/functions/format-word";
+import { formatWord } from "@/lib/hooks/format-word";
 import { ITEM_CONDITIONS } from "../page";
+import { useSwipe } from "@/lib/hooks/useSwipe";
 
 const MAX_IMAGES = 10;
 
@@ -460,19 +461,16 @@ function ImageCarousel({
   onReorder,
   touchStartX,
 }: ImageCarouselProps) {
+  const swipe = useSwipe(onNext, onPrevious);
   return (
     <div className="space-y-3">
       <div
         className="relative flex aspect-[16/9] w-full items-center justify-center overflow-hidden rounded-2xl bg-muted lg:aspect-auto lg:h-52"
         onTouchStart={(e) => {
-          touchStartX.current = e.touches[0].clientX;
+          swipe.onTouchStart(e.touches[0].clientX)
         }}
         onTouchEnd={(e) => {
-          if (touchStartX.current === null || imgSrcs.length <= 1) return;
-          const diff = touchStartX.current - e.changedTouches[0].clientX;
-          touchStartX.current = null;
-          if (Math.abs(diff) < 50) return;
-          diff > 0 ? onNext() : onPrevious();
+          swipe.onTouchEnd(e.touches[0].clientX)
         }}
       >
         {imgSrcs.length > 0 && (
