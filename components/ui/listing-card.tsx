@@ -164,6 +164,7 @@ export default function ListingCard({ listing }: { listing: Listing }) {
               </>
             ) : (
               <>
+                <Link href={`/report/${listing.id}`}>
                 <DropdownMenuItem
                   variant="destructive"
                   className="cursor-pointer rounded-xl px-2.5 py-2.5"
@@ -171,6 +172,7 @@ export default function ListingCard({ listing }: { listing: Listing }) {
                   <Flag className="size-4" />
                   Report listing
                 </DropdownMenuItem>
+                </Link>
                 <DropdownMenuItem
                   className="cursor-pointer rounded-xl px-2.5 py-2.5"
                   onSelect={handleShare}

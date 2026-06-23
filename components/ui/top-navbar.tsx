@@ -15,7 +15,8 @@ import { cn } from "@/lib/utils";
 export default function TopNavBar() {
   const user = useUser();
   const pathname = usePathname();
-  const isListingsPage = pathname.startsWith("/listings");
+  const paths = ["/listings", "/report"];
+  const isListingsPage = paths.some(path => pathname.startsWith(path));
 
   const navTextClass = isListingsPage
     ? "text-slate-900 hover:bg-slate-100 hover:text-slate-900"

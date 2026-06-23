@@ -26,7 +26,6 @@ import { FilterType } from "@/interfaces/filter";
 import { formatWord } from "@/lib/hooks/format-word";
 import ListingCard from "@/components/ui/listing-card";
 
-
 export const ITEM_CONDITIONS = ["NEW", "LIKE_NEW", "GOOD", "FAIR", "POOR"] as const;
 
 const EMPTY_FILTERS = {
@@ -131,7 +130,7 @@ export default function ListingsPage() {
   };
 
   return (
-    <main className="min-h-screen flex-1 pt-26 bg-muted/30 px-4 pb-6 pt-10 sm:px-6 lg:px-8">
+    <main className="min-h-screen flex-1 bg-muted/30 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-28 sm:px-6 sm:pb-10 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-8">
         <section className="space-y-3">
           <div className="flex items-center justify-between gap-4">

@@ -3,7 +3,6 @@ import api from "../axios/api";
 
 export const signUp = async (data: SignUpData) => {
     const res = await api.post(`/auth/signup`, data)
-    console.log("Error is: " + res)
     return res.data;
 }
 
