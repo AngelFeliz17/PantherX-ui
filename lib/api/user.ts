@@ -1,7 +1,6 @@
 import axios from "axios";
 import api from "../axios/api";
 import { cache } from "react";
-import { headers } from "next/headers";
 
 export type UpdateUserData = {
   name?: string;

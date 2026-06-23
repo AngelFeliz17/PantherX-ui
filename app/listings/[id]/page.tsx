@@ -1,5 +1,6 @@
 "use client";
 
+import axios from "axios";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,10 +9,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { use, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Listing } from "@/interfaces/listing";
+import type { Listing } from "@/interfaces/listing";
 import { find } from "@/lib/api/listings";
 import { formatWord } from "@/lib/hooks/format-word";
 import Link from "next/link";
+import { start } from "@/lib/api/conversations";
+import { send } from "@/lib/api/messages";
+import { BackendResponse } from "@/interfaces/response";
 
 interface PageProps {
   params: Promise<{
@@ -24,7 +28,9 @@ export default function ListingPage({ params }: PageProps) {
   const [listing, setListing] = useState<Listing | null>(null);
 
   const [selectedImage, setSelectedImage] = useState(0);
-  const [message, setMessage] = useState("Is this available?");
+  const [message, setMessage] = useState("What's your lowest price?");
+  const [response, setResponse] = useState<BackendResponse>();
+  const [sending, setSending] = useState(false);
 
   const touchStartX = useRef<number | null>(null);
 
@@ -57,6 +63,42 @@ export default function ListingPage({ params }: PageProps) {
     getListing();
   }, [id]);
 
+  const handleStartConversation = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const trimmedMessage = message.trim();
+
+    if (!trimmedMessage || sending) {
+      return;
+    }
+
+    setSending(true);
+    setResponse(undefined);
+    try {
+      const conversation = await start(id);
+      await handleSendMessage(conversation.id, trimmedMessage);
+    } catch(error) {
+      if (axios.isAxiosError<BackendResponse["data"]>(error)) {
+        setResponse({
+          data: error.response?.data ?? { message: error.message },
+          status: error.response?.status,
+        });
+      } else {
+        setResponse({
+          data: { message: "Unable to send message. Please try again." },
+          status: 500,
+        });
+      }
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handleSendMessage = async (conversationId: string, content: string) => {
+    const response = await send(conversationId, content);
+    setResponse(response);
+    setMessage("");
+  };
+
   if (!listing) {
     return (
       <main className="mx-auto max-w-7xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-28 sm:pb-10 md:px-6">
@@ -66,6 +108,8 @@ export default function ListingPage({ params }: PageProps) {
       </main>
     );
   }
+
+  const seller = listing.seller;
 
   return (
     <main className="min-h-screen bg-background px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-28 sm:pb-10 md:px-6">
@@ -90,7 +134,11 @@ export default function ListingPage({ params }: PageProps) {
 
                     if (Math.abs(diff) < 50) return;
 
-                    diff > 0 ? nextImage() : previousImage();
+                    if (diff > 0) {
+                      nextImage();
+                    } else {
+                      previousImage();
+                    }
                   }}
                 >
                   {currentImage ? (
@@ -199,20 +247,21 @@ export default function ListingPage({ params }: PageProps) {
                       Seller
                     </p>
                     <Link
-                      href={`/profile/${listing.seller.id}`}
+                      href={seller ? `/profile/${seller.id}` : "#"}
                       className="mt-2 flex items-center gap-3"
+                      aria-disabled={!seller}
                     >
                       <div className="relative h-10 w-10 overflow-hidden rounded-full bg-muted">
                         <Image
-                          src={listing.seller.profilePicture?.url || "/images/default-profile-picture.png"}
-                          alt={listing.seller?.name ?? "Unknown seller"}
+                          src={seller?.profilePicture?.url || "/images/default-profile-picture.png"}
+                          alt={seller?.name ?? "Unknown seller"}
                           fill
                           className="object-cover"
                         />
                       </div>
 
                       <span className="font-medium">
-                        {listing.seller?.name ?? "Unknown seller"}
+                        {seller?.name ?? "Unknown seller"}
                       </span>
                     </Link>
                   </div>
@@ -251,20 +300,40 @@ export default function ListingPage({ params }: PageProps) {
 
                 <Separator />
 
+                  <form id="message-form" onSubmit={handleStartConversation}>
                 <div className="space-y-3">
                   <h2 className="text-lg font-semibold">Message Seller</h2>
-
-                  <Textarea
+                     <Textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     className="min-h-28 resize-none rounded-2xl"
                     placeholder="Write a message..."
                   />
 
-                  <Button className="w-full rounded-xl">
-                    Send Message
+                  {response && (
+                <div
+                  className={`rounded-xl p-4 ${
+                    response.status && response.status >= 200 && response.status < 300
+                      ? "bg-green-50"
+                      : "bg-red-50"
+                  }`}
+                >
+                  <p
+                    className={`text-sm first-letter:uppercase ${
+                      response.status && response.status >= 200 && response.status < 300
+                        ? "text-green-700"
+                        : "text-red-700"
+                    }`}
+                  >
+                    {response.data?.message ?? "Message sent."}
+                  </p>
+                  </div>
+                )}
+                  <Button type="submit" disabled={sending || !message.trim()} className="w-full rounded-xl">
+                    {sending ? "Sending..." : "Send Message"}
                   </Button>
                 </div>
+              </form>
               </CardContent>
             </Card>
           </div>
