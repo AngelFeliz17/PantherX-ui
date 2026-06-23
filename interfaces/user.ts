@@ -26,6 +26,4 @@ export type User = {
     listingId: string;
     listings: Listing[];
   }[]
-};
-
-export type NullableUser = User | null;
+} | null;
