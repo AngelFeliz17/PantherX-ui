@@ -3,8 +3,7 @@ import "./globals.css";
 import { getMe } from "@/lib/api/user";
 import { UserProvider } from "../context/user-context";
 import { cookies } from "next/headers";
-import TopNavBar from "@/components/ui/top-navbar";
-import BottomNavBar from "@/components/ui/bottom-navbar";
+import AppShell from "@/components/ui/app-shell";
 import type { User } from "@/interfaces/user";
 
 const poppins = Poppins({
@@ -33,11 +32,9 @@ export default async function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <UserProvider user={user}>
-          <TopNavBar />
-          <main>
+          <AppShell>
             {children}
-          </main>
-          <BottomNavBar />
+          </AppShell>
         </UserProvider>
         </body>
     </html>

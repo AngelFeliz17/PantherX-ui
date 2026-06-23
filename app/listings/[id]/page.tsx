@@ -66,7 +66,6 @@ export default function ListingPage({ params }: PageProps) {
   const handleStartConversation = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const trimmedMessage = message.trim();
-
     if (!trimmedMessage || sending) {
       return;
     }

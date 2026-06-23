@@ -9,3 +9,8 @@ export const findAll = async () => {
     const { data } = await api.get(`/conversations`);
     return data;
 };
+
+export const findConversation = async (id: string) => {
+    const { data } = await api.get(`/conversations/${id}`);
+    return data;
+};

@@ -1,7 +1,7 @@
 "use client";
 
 import { useUser, useUserActions } from "@/context/user-context";
-import { Listing } from '@/interfaces/listing';
+import type { Listing } from "@/interfaces/listing";
 import { formatWord } from "@/lib/hooks/format-word";
 import {
   MoreHorizontal,
@@ -23,20 +23,15 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { add, remove } from "@/lib/api/favorite";
-import { useEffect, useState } from "react";
 
 export default function ListingCard({ listing }: { listing: Listing }) {
   const imageUrl = listing.images?.[0]?.url;
   const user = useUser();
   const { refreshUser } = useUserActions();
-  const isOwner = listing.seller.id === user?.id;
+  const seller = listing.seller;
+  const isOwner = seller?.id === user?.id;
   const listingHref = `/listings/${listing.id}`;
-  const [isFavorite, setIsFavorite] = useState(false);
-
-  useEffect(() => {
-    const exists = user?.favorites?.some(l => l.listingId === listing.id) ?? false;
-    setIsFavorite(exists);
-  }, [user?.favorites, listing.id])
+  const isFavorite = user?.favorites?.some(l => l.listingId === listing.id) ?? false;
 
   const handleShare = async () => {
     const url = `${window.location.origin}${listingHref}`;
@@ -62,10 +57,8 @@ export default function ListingCard({ listing }: { listing: Listing }) {
     e.stopPropagation();
     if(!isFavorite) {
       await add(listing.id);
-      setIsFavorite(true);
     } else {
       await remove(listing.id);
-      setIsFavorite(false);
     }
     await refreshUser();
   };
@@ -73,7 +66,7 @@ export default function ListingCard({ listing }: { listing: Listing }) {
   return (
     <article className="group relative overflow-hidden rounded-3xl border bg-background shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg">
       {
-        user?.id !== listing.seller.id && <button
+        user?.id !== seller?.id && <button
         type="button"
         onClick={handleAddToFavorite}
         aria-label={`Save ${listing.title}`}
@@ -109,7 +102,7 @@ export default function ListingCard({ listing }: { listing: Listing }) {
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <span>{formatWord(listing.condition)}</span>
             <span className="line-clamp-1 max-w-[120px] text-right">
-              {listing.seller.name}
+              {seller?.name ?? "Unknown seller"}
             </span>
           </div>
         </div>
