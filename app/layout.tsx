@@ -5,7 +5,7 @@ import { UserProvider } from "../context/user-context";
 import { cookies } from "next/headers";
 import TopNavBar from "@/components/ui/top-navbar";
 import BottomNavBar from "@/components/ui/bottom-navbar";
-import type { User } from "@/context/user-context";
+import type { User } from "@/interfaces/user";
 
 const poppins = Poppins({
   subsets: ["latin"],

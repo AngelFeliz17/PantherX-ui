@@ -20,13 +20,12 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { User, useUser } from "@/context/user-context";
+import { useUser } from "@/context/user-context";
 import { findUserProfile } from "@/lib/api/user";
 import NotLoggedUser from "@/components/ui/not-logged-user";
 import { useRouter } from "next/navigation";
-import { use
-
- } from "react";
+import { use } from "react";
+import { User } from "@/interfaces/user";
 import NotFound from "@/app/not-found";
 import ListingCard from "@/components/ui/listing-card";
 type Props = {

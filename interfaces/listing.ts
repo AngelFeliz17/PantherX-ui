@@ -1,3 +1,5 @@
+import { User } from "./user";
+
 export interface ListingFormData {
   title: string;
   price: number | "";
@@ -15,22 +17,16 @@ export type Listing = {
   price: string;
   status: string;
   condition: string;
+  location: string;
+  createdAt: Date;
   images: {
     id: string;
     url: string;
     order: number;
   }[]
-  seller: {
+  seller: User;
+  category: {
     id: string;
     name: string;
-    profilePicture?: {
-    id: string;
-    url: string;
-    order: number;
-  }; 
-}
-category: {
-  id: string;
-  name: string;
-}
+  }
 }

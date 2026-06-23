@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 export default function TopNavBar() {
   const user = useUser();
   const pathname = usePathname();
-  const paths = ["/listings", "/report"];
+  const paths = ["/listings", "/report", "/messages"];
   const isListingsPage = paths.some(path => pathname.startsWith(path));
 
   const navTextClass = isListingsPage

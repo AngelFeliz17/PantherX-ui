@@ -11,6 +11,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Listing } from "@/interfaces/listing";
 import { find } from "@/lib/api/listings";
 import { formatWord } from "@/lib/hooks/format-word";
+import Link from "next/link";
 
 interface PageProps {
   params: Promise<{
@@ -58,7 +59,7 @@ export default function ListingPage({ params }: PageProps) {
 
   if (!listing) {
     return (
-      <main className="mx-auto max-w-7xl px-4 py-8 mt-24 md:px-6">
+      <main className="mx-auto max-w-7xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-28 sm:pb-10 md:px-6">
         <div className="flex items-center justify-center py-24 text-muted-foreground">
           Loading listing...
         </div>
@@ -67,8 +68,8 @@ export default function ListingPage({ params }: PageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-background mt-20">
-      <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
+    <main className="min-h-screen bg-background px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-28 sm:pb-10 md:px-6">
+      <div className="mx-auto max-w-7xl">
         <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-4">
             <Card className="overflow-hidden rounded-[2rem] border border-border/50 py-0 shadow-none">
@@ -183,7 +184,7 @@ export default function ListingPage({ params }: PageProps) {
 
                 <Separator />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-2">
                   <div className="rounded-2xl bg-muted/50 p-4">
                     <p className="text-xs uppercase tracking-wider text-muted-foreground">
                       Condition
@@ -197,8 +198,44 @@ export default function ListingPage({ params }: PageProps) {
                     <p className="text-xs uppercase tracking-wider text-muted-foreground">
                       Seller
                     </p>
+                    <Link
+                      href={`/profile/${listing.seller.id}`}
+                      className="mt-2 flex items-center gap-3"
+                    >
+                      <div className="relative h-10 w-10 overflow-hidden rounded-full bg-muted">
+                        <Image
+                          src={listing.seller.profilePicture?.url || "/images/default-profile-picture.png"}
+                          alt={listing.seller?.name ?? "Unknown seller"}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+
+                      <span className="font-medium">
+                        {listing.seller?.name ?? "Unknown seller"}
+                      </span>
+                    </Link>
+                  </div>
+
+                  <div className="rounded-2xl bg-muted/50 p-4">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                      Location
+                    </p>
                     <p className="mt-2 font-medium">
-                      {listing.seller?.name ?? "Unknown seller"}
+                      {listing.location || "No location provided"}
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl bg-muted/50 p-4">
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                      Posted
+                    </p>
+                    <p className="mt-2 font-medium">
+                      {new Date(listing.createdAt).toLocaleDateString(undefined, {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
                     </p>
                   </div>
                 </div>

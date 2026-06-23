@@ -2,35 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { getMeFresh } from "@/lib/api/user";
-import { Listing } from "@/interfaces/listing";
-
-export type User = {
-  id: string;
-  email: string;
-  name: string;
-  profilePicture?: {
-    id: string;
-    url: string;
-    order: number;
-  };
-  banner?: {
-    id: string;
-    url: string;
-    order: number;
-  }
-  bio?: string;
-  graduationYear?: string;
-  createdAt: Date;
-  university: {
-    id: string;
-    name: string;
-  }
-  listings?: Listing[];
-  favorites?: {
-    listingId: string;
-    listings: Listing[];
-  }[]
-} | null;
+import { User } from "@/interfaces/user";
 
 const UserContext = createContext<User>(null);
 const UserActionsContext = createContext<{
