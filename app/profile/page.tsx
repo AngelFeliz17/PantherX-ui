@@ -31,6 +31,9 @@ import { useUser, useUserActions } from "@/context/user-context";
 import { logOut } from "@/lib/api/auth";
 import { updateProfileBanner, updateProfilePicture } from "@/lib/api/user";
 import NotLoggedUser from "@/components/ui/not-logged-user";
+import ListingCard from "@/components/ui/listing-card";
+import { find } from "@/lib/api/favorite";
+import { Listing } from "@/interfaces/listing";
 
 export default function ProfilePage() {
   const user = useUser();
@@ -48,7 +51,17 @@ export default function ProfilePage() {
   const [pendingAvatarFile, setPendingAvatarFile] = useState<File | null>(null);
   const [isAvatarOverlayActive, setIsAvatarOverlayActive] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const [favoriteListings, setFavoriteListings] = useState<Listing[]>([]);
 
+  useEffect(() => {
+    const findFavs = async () => {
+      const result = await find();
+      const listings = result.data.favorites.map((l: any) => l.listing);
+      setFavoriteListings(listings);
+    };
+    findFavs();
+  }, [user?.id])
+  
   useEffect(() => {
     return () => {
       if (bannerSrc.startsWith("blob:")) {
@@ -336,7 +349,7 @@ export default function ProfilePage() {
 
                 <StatCard
                   icon={<Heart className="h-5 w-5" />}
-                  value={user?.favorite?.length || 0}
+                  value={favoriteListings?.length || 0}
                   label="Saved"
                 />
 
@@ -376,34 +389,7 @@ export default function ProfilePage() {
             {
                 (user?.listings?.length ?? 0) >= 1 ? <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {user?.listings?.map((listing) => (
-                <Card
-                  key={listing.id}
-                  className="overflow-hidden rounded-3xl transition hover:-translate-y-1 hover:shadow-xl"
-                >
-                  <div className="relative h-56">
-                    <Image
-                      src={listing?.images?.[0]?.url || "/images/graduate.png"}
-                      alt={listing.title}
-                      fill
-                      className="object-cover -mt-6"
-                      unoptimized={Boolean(listing?.images?.[0]?.url?.startsWith("blob:"))}
-                    />
-                  </div>
-
-                  <CardContent className="space-y-3 p-5">
-                    <h3 className="font-semibold">
-                      {listing.title}
-                    </h3>
-
-                    <p className="text-xl font-bold">
-                      ${listing.price}
-                    </p>
-
-                    <p className="text-sm text-muted-foreground">
-                      {listing.description}
-                    </p>
-                  </CardContent>
-                </Card>
+                <ListingCard key={listing.id} listing={listing} />
               ))}
             </div> : <Card className="mt-8 rounded-3xl">
               <CardContent className="p-8">
@@ -428,13 +414,23 @@ export default function ProfilePage() {
 
           {/* Saved */}
           <TabsContent value="saved">
+                {
+                  favoriteListings.length > 0 ?(
+                    <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                      {
+                   favoriteListings.map(f => (
+                    <ListingCard key={f.id} listing={f} />
+                  ))}
+                  </div>
+                  ) :
             <Card className="mt-8 rounded-3xl">
               <CardContent className="p-8">
-                <p className="text-muted-foreground">
+                  <p className="text-muted-foreground">
                   No saved listings
                 </p>
               </CardContent>
             </Card>
+          }
           </TabsContent>
 
           {/* About */}

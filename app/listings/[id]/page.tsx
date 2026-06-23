@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { use, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Listing } from "@/context/user-context";
+import { Listing } from "@/interfaces/listing";
 import { find } from "@/lib/api/listings";
 import { formatWord } from "@/lib/hooks/format-word";
 

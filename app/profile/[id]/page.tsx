@@ -28,6 +28,7 @@ import { use
 
  } from "react";
 import NotFound from "@/app/not-found";
+import ListingCard from "@/components/ui/listing-card";
 type Props = {
     params: Promise<{ id: string }>;
 }
@@ -107,10 +108,6 @@ export default function UserProfilePageById({ params }: Props) {
                       {user?.name}
                     </h1>
 
-                    {/* <p className="mt-1 text-muted-foreground">
-                      @angelfeliz
-                    </p> */}
-
                     {
                         user?.bio &&
                         <p className="mt-4 max-w-xl text-sm text-slate-600">
@@ -136,7 +133,7 @@ export default function UserProfilePageById({ params }: Props) {
               </div>
 
               {/* Stats */}
-              <div className="mt-10 grid gap-4 md:grid-cols-4">
+              <div className="mt-10 grid gap-4 md:grid-cols-3">
                 <StatCard
                   icon={<Package className="h-5 w-5" />}
                   value={user?.listings?.length || 0}
@@ -147,12 +144,6 @@ export default function UserProfilePageById({ params }: Props) {
                   icon={<Star className="h-5 w-5" />}
                   value="4.9"
                   label="Rating"
-                />
-
-                <StatCard
-                  icon={<Heart className="h-5 w-5" />}
-                  value={user?.favorite?.length || 0}
-                  label="Saved"
                 />
 
                 <StatCard
@@ -177,10 +168,6 @@ export default function UserProfilePageById({ params }: Props) {
               Reviews
             </TabsTrigger>
 
-            <TabsTrigger value="saved">
-              Saved
-            </TabsTrigger>
-
             <TabsTrigger value="about">
               About
             </TabsTrigger>
@@ -191,34 +178,7 @@ export default function UserProfilePageById({ params }: Props) {
             {
                 (user?.listings?.length ?? 0) >= 1 ? <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {user?.listings?.map((listing) => (
-                <Card
-                  key={listing.id}
-                  className="overflow-hidden rounded-3xl transition hover:-translate-y-1 hover:shadow-xl"
-                >
-                  <div className="relative h-56">
-                    <Image
-                      src={listing?.images?.[0]?.url || "/images/graduate.png"}
-                      alt={listing.title}
-                      fill
-                      className="object-cover -mt-6"
-                      unoptimized={Boolean(listing?.images?.[0]?.url?.startsWith("blob:"))}
-                    />
-                  </div>
-
-                  <CardContent className="space-y-3 p-5">
-                    <h3 className="font-semibold">
-                      {listing.title}
-                    </h3>
-
-                    <p className="text-xl font-bold">
-                      ${listing.price}
-                    </p>
-
-                    <p className="text-sm text-muted-foreground">
-                      {listing.description}
-                    </p>
-                  </CardContent>
-                </Card>
+                <ListingCard key={listing.id} listing={listing} />
               ))}
             </div> : <Card className="mt-8 rounded-3xl">
               <CardContent className="p-8">
@@ -236,17 +196,6 @@ export default function UserProfilePageById({ params }: Props) {
               <CardContent className="p-8">
                 <p className="text-muted-foreground">
                   No reviews yet
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Saved */}
-          <TabsContent value="saved">
-            <Card className="mt-8 rounded-3xl">
-              <CardContent className="p-8">
-                <p className="text-muted-foreground">
-                  No saved listings
                 </p>
               </CardContent>
             </Card>
