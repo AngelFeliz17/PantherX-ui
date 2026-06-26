@@ -54,6 +54,7 @@ export default function ProfilePage() {
   const [favoriteListings, setFavoriteListings] = useState<Listing[]>([]);
 
   useEffect(() => {
+    if(!user) return;
     const findFavs = async () => {
       const result = await find();
       const listings = result.data.favorites.map((l: any) => l.listing);

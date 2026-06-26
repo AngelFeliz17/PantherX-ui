@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -19,8 +19,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Footer from "@/components/ui/footer";
+import { Router } from "next/router";
 
 export default function LandingPage() {
+  const [search, setSearch] = useState("");
   return (
     <main className="min-h-screen bg-background pb-16 md:pb-0">
       {/* HERO */}
@@ -62,13 +64,17 @@ export default function LandingPage() {
                 <Search className="h-5 w-5 text-muted-foreground" />
 
                 <Input
+                  onChange={(e) => setSearch(e.target.value)}
+                  value={search}
                   placeholder="Search textbooks, furniture, electronics..."
                   className="border-0 shadow-none focus-visible:ring-0 text-black"
                 />
 
-                <Button className="rounded-xl bg-violet-600 hover:bg-violet-700">
+                <Link href={`/listings?search=${search}`}>
+                <Button className="rounded-xl bg-violet-600 hover:bg-violet-700 cursor-pointer">
                   Search
                 </Button>
+                </Link>
               </div>
 
               {/* CTA */}
@@ -83,6 +89,7 @@ export default function LandingPage() {
                   </Link>
                 </Button>
 
+                <Link href={'/listings'}>
                 <Button
                   size="lg"
                   variant="secondary"
@@ -90,6 +97,7 @@ export default function LandingPage() {
                 >
                   Browse Listings
                 </Button>
+                </Link>
               </div>
             </div>
           </div>

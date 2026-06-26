@@ -25,6 +25,7 @@ import { filterListings } from "@/lib/api/filter";
 import { FilterType } from "@/interfaces/filter";
 import { formatWord } from "@/lib/hooks/format-word";
 import ListingCard from "@/components/ui/listing-card";
+import { useSearchParams } from "next/navigation";
 
 export const ITEM_CONDITIONS = ["NEW", "LIKE_NEW", "GOOD", "FAIR", "POOR"] as const;
 
@@ -49,15 +50,38 @@ function toApiFilters(filters: Filters): FilterType {
 }
 
 export default function ListingsPage() {
+  const searchParams = useSearchParams();
+  const search = searchParams.get('search') as any;
+
   const [listings, setListings] = useState<Listing[]>([]);
   const [categories, setCategories] = useState<CategoryType[]>([]);
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState<Filters>(EMPTY_FILTERS);
+  const [filters, setFilters] = useState<Filters>(() => ({
+    ...EMPTY_FILTERS,
+    search: search,
+  }));
   const [loading, setLoading] = useState(false);
 
   const filterPanelRef = useRef<HTMLDivElement>(null);
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    const filterByParam = async () => {
+      getCategories().then(setCategories);
+
+      if(search) {
+        await applyFilters({ search });
+        setFilters((prev) => ({
+          ...prev,
+          search: search
+        }));
+      } else {
+        findAll().then((result) => setListings(result ?? []));
+      }
+    }
+    filterByParam();
+  }, [search])
+  
   // Close the filter panel on outside click.
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -102,12 +126,6 @@ export default function ListingsPage() {
       setLoading(false);
     }
   }, [filters]);
-
-  // Initial load.
-  useEffect(() => {
-    findAll().then((result) => setListings(result ?? []));
-    getCategories().then(setCategories);
-  }, []);
 
   const handleSearchChange = (value: string) => {
     setFilters((prev) => ({ ...prev, search: value }));
@@ -155,7 +173,7 @@ export default function ListingsPage() {
               <Search className="h-5 w-5 text-muted-foreground" />
               <input
                 type="text"
-                value={filters.search}
+                value={filters.search ?? ""}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Search for textbooks, electronics, furniture..."
                 className="w-full bg-transparent outline-none placeholder:text-muted-foreground"

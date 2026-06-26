@@ -7,15 +7,17 @@ import { ArrowLeft, MessageCircle, Search, Send } from "lucide-react";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Message } from "@/interfaces/message";
+import { send } from "@/lib/api/messages";
 
 export default function MessagesPage() {
   const user = useUser();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
-  const [messageInput, setMessageInput] = useState("");
+  const [content, setContent] = useState("");
 
   useEffect(() => {
+    if(!user) return;
     const getConversations = async () => {
       const response = await findAll();
       setConversations(response ?? []);
@@ -28,6 +30,12 @@ export default function MessagesPage() {
 
     const response = await findConversation(conversation.id);
     setMessages(response ?? []);
+  };
+
+  const handleSendMessage = async () => {
+    const currentConversationId = selectedConversation?.id as any;
+    await send(currentConversationId, content).then(() => getMessages(selectedConversation as Conversation));
+    setContent("");
   };
 
   return (
@@ -187,15 +195,22 @@ export default function MessagesPage() {
               <div className="shrink-0 border-t bg-card p-4">
                 <div className="flex items-center gap-2 rounded-2xl border p-2">
                   <input
-                    value={messageInput}
-                    onChange={e => setMessageInput(e.target.value)}
+                    value={content}
+                    onChange={e => setContent(e.target.value)}
+                    onKeyDown={e => {
+                      if(e.key === "Enter" && content.trim()) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
                     placeholder="Type a message..."
                     className="min-w-0 flex-1 bg-transparent px-2 outline-none"
                   />
 
                   <button
                     type="button"
-                    disabled={!messageInput.trim()}
+                    onClick={handleSendMessage}
+                    disabled={!content.trim()}
                     className="shrink-0 rounded-xl bg-primary p-3 text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Send className="size-5" />

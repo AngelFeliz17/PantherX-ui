@@ -35,6 +35,8 @@ import imageCompression from "browser-image-compression";
 import { formatWord } from "@/lib/hooks/format-word";
 import { ITEM_CONDITIONS } from "../page";
 import { useSwipe } from "@/lib/hooks/useSwipe";
+import { useUser } from "@/context/user-context";
+import NotLoggedUser from "@/components/ui/not-logged-user";
 
 const MAX_IMAGES = 10;
 
@@ -49,6 +51,7 @@ const EMPTY_FORM: ListingFormData = {
 };
 
 export default function CreateListingPage() {
+  const user = useUser();
   const [imgFiles, setImgFiles] = useState<File[]>([]);
   const [imgSrcs, setImgSrcs] = useState<string[]>([]);
   const imagesInputRef = useRef<HTMLInputElement>(null);
@@ -62,6 +65,7 @@ export default function CreateListingPage() {
   const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
+    if(!user) return;
     getCategories().then(setCategories);
   }, []);
 
@@ -229,6 +233,10 @@ export default function CreateListingPage() {
     }
   };
 
+  if(!user) {
+    
+  }
+  
   return (
     <div className="mx-auto max-w-4xl px-4 py-24">
       <div className="mb-8 space-y-1">
@@ -238,7 +246,8 @@ export default function CreateListingPage() {
         </p>
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_350px]">
+      {
+        !user ? <NotLoggedUser /> : <div className="grid gap-8 lg:grid-cols-[1fr_350px]">
         <Card className="rounded-3xl border shadow-sm">
           <form id="listing" onSubmit={handlePostListing}>
             <CardContent className="space-y-6 p-6">
@@ -436,6 +445,7 @@ export default function CreateListingPage() {
           </CardContent>
         </Card>
       </div>
+      }
     </div>
   );
 }
