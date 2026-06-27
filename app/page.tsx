@@ -84,7 +84,7 @@ export default function LandingPage() {
                   asChild
                   className="rounded-lg bg-violet-600 hover:bg-violet-700"
                 >
-                  <Link href="/signup">
+                  <Link href="/listings/create">
                     Start Selling
                   </Link>
                 </Button>
