@@ -233,10 +233,6 @@ export default function CreateListingPage() {
     }
   };
 
-  if(!user) {
-    
-  }
-  
   return (
     <div className="mx-auto max-w-4xl px-4 py-24">
       <div className="mb-8 space-y-1">
@@ -469,7 +465,6 @@ function ImageCarousel({
   onSelect,
   onRemove,
   onReorder,
-  touchStartX,
 }: ImageCarouselProps) {
   const swipe = useSwipe(onNext, onPrevious);
   return (

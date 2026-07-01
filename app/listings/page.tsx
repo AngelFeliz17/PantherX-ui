@@ -353,7 +353,7 @@ function EmptyState({ loading }: { loading: boolean }) {
           </p>
 
           <Link
-            href="/listing/create"
+            href="/listings/create"
             className="mt-6 flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-primary-foreground transition hover:scale-[1.02]"
           >
             <Plus className="h-4 w-4" />

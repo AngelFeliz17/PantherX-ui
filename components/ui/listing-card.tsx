@@ -23,6 +23,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { add, remove } from "@/lib/api/favorite";
+import { Button } from "./button";
 
 export default function ListingCard({ listing }: { listing: Listing }) {
   const imageUrl = listing.images?.[0]?.url;
@@ -131,10 +132,12 @@ export default function ListingCard({ listing }: { listing: Listing }) {
 
             {isOwner ? (
               <>
-                <DropdownMenuItem className="cursor-pointer rounded-xl px-2.5 py-2.5">
+                <Link href={`/listings/edit/${listing.id}`}>
+                  <DropdownMenuItem className="cursor-pointer rounded-xl px-2.5 py-2.5">
                   <Pencil className="size-4" />
                   Edit listing
                 </DropdownMenuItem>
+                </Link>
                 <DropdownMenuItem
                   variant="destructive"
                   className="cursor-pointer rounded-xl px-2.5 py-2.5"
