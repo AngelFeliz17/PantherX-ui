@@ -10,6 +10,11 @@ export const create = async (dataForm: FormData) => {
     return { data, status };
 }
 
+export const update = async (id: string, dataForm: FormData) => {
+    const { data, status} = await api.post(`/listings/${id}`, dataForm);
+    return { data, status };
+}
+
 export const find = async (id: string) => {
     const { data } = await api.get(`/listings/${id}`);
     return data;
