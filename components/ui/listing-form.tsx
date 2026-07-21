@@ -26,7 +26,7 @@ import {
   X,
 } from "lucide-react";
 
-import { ListingFormData } from "@/interfaces/listing";
+import { Listing, ListingFormData } from "@/interfaces/listing";
 import { getCategories } from "@/lib/api/categories";
 import { CategoryType } from "@/interfaces/category";
 import { BackendResponse } from "@/interfaces/response";
@@ -39,32 +39,37 @@ import NotLoggedUser from "@/components/ui/not-logged-user";
 
 export const EMPTY_FORM: ListingFormData = {
   title: "",
-  price: "",
+  price: 0,
   categoryId: "",
   condition: "",
   location: "Cedar Falls, IA",
   description: "",
-  images: [],
+  images: []
 };
 
 const MAX_IMAGES = 10;
 
+type ImageSlot = { url: string; file?: File; existingId?: string };
+
 interface ListingFormProps {
     onSubmit: (data: FormData) => Promise<BackendResponse>;
-    initialData: ListingFormData;
+    initialData?: Listing;
+    onSuccess?: () => void;
+    onCancel?: () => void;
 }
 
-export default function ListingForm({ onSubmit, initialData }: ListingFormProps) {
-     const user = useUser();
-      const [imgFiles, setImgFiles] = useState<File[]>([]);
-      const [imgSrcs, setImgSrcs] = useState<string[]>([]);
+export default function ListingForm({ onSubmit, initialData, onSuccess, onCancel }: ListingFormProps) {
+      const user = useUser();
+      const isEditing = Boolean(initialData);
+      const [images, setImages] = useState<ImageSlot[]>([]);
+      const imgSrcs = useMemo(() => images.map((img) => img.url), [images]);
       const imagesInputRef = useRef<HTMLInputElement>(null);
     
       const [categories, setCategories] = useState<CategoryType[]>([]);
       const [currentImage, setCurrentImage] = useState(0);
       const [message, setMessage] = useState<BackendResponse>();
       const [submitting, setSubmitting] = useState(false);
-      const [formData, setFormData] = useState(initialData);
+      const [formData, setFormData] = useState<ListingFormData>(EMPTY_FORM);
       
       const touchStartX = useRef<number | null>(null);
     
@@ -74,7 +79,23 @@ export default function ListingForm({ onSubmit, initialData }: ListingFormProps)
       }, []);
 
       useEffect(() => {
-        setFormData(initialData);
+        if(!initialData) return;
+        setFormData({
+          title: initialData.title,
+          price: Number(initialData.price),
+          categoryId: initialData.category.id,
+          condition: initialData.condition,
+          location: initialData.location,
+          description: initialData.description,
+          images: [],
+        });
+
+        setImages(
+          initialData.images
+            .slice()
+            .sort((a, b) => a.order - b.order)
+            .map((img) => ({ url: img.url, existingId: img.id }))
+        );
       }, [initialData])
     
       // Keep the carousel index in range whenever images are added/removed.
@@ -86,19 +107,24 @@ export default function ListingForm({ onSubmit, initialData }: ListingFormProps)
         }
       }, [imgSrcs, currentImage]);
     
-      // Keep formData.images in sync with the file list.
+      // Keep formData.images in sync with the newly-added (non-existing) files.
       useEffect(() => {
-        setFormData((prev) => ({ ...prev, images: imgFiles }));
-      }, [imgFiles]);
-    
-      // Revoke every blob URL only on final unmount, not on every imgSrcs change.
-      // (Reading from a ref here, not the imgSrcs state, so this effect's
+        setFormData((prev) => ({
+          ...prev,
+          images: images.filter((img) => img.file).map((img) => img.file!),
+        }));
+      }, [images]);
+
+      // Revoke every blob URL only on final unmount, not on every images change.
+      // (Reading from a ref here, not the images state, so this effect's
       // cleanup doesn't fire mid-session and revoke URLs still in use.)
-      const imgSrcsRef = useRef(imgSrcs);
-      imgSrcsRef.current = imgSrcs;
+      const imagesRef = useRef(images);
+      imagesRef.current = images;
       useEffect(() => {
         return () => {
-          imgSrcsRef.current.forEach((src) => URL.revokeObjectURL(src));
+          imagesRef.current.forEach((img) => {
+            if (img.file) URL.revokeObjectURL(img.url);
+          });
         };
       }, []);
     
@@ -120,18 +146,17 @@ export default function ListingForm({ onSubmit, initialData }: ListingFormProps)
         e.target.value = "";
         if (!files.length) return;
     
-        const remaining = Math.max(0, MAX_IMAGES - imgFiles.length);
+        const remaining = Math.max(0, MAX_IMAGES - images.length);
         const filesToAdd = files.slice(0, remaining);
         if (!filesToAdd.length) return;
-    
-        const wasEmpty = imgFiles.length === 0;
-    
-        setImgFiles((prev) => [...prev, ...filesToAdd]);
-        setImgSrcs((prev) => [
+
+        const wasEmpty = images.length === 0;
+
+        setImages((prev) => [
           ...prev,
-          ...filesToAdd.map((file) => URL.createObjectURL(file)),
+          ...filesToAdd.map((file) => ({ url: URL.createObjectURL(file), file })),
         ]);
-    
+
         // Jump to the first photo only on the very first upload, so the
         // carousel never silently drifts to whatever index it happened to be
         // on. Subsequent uploads append after the current set without moving
@@ -140,11 +165,13 @@ export default function ListingForm({ onSubmit, initialData }: ListingFormProps)
           setCurrentImage(0);
         }
       };
-    
+
       const removeImage = (index: number) => {
-        URL.revokeObjectURL(imgSrcs[index]);
-        setImgFiles((prev) => prev.filter((_, i) => i !== index));
-        setImgSrcs((prev) => prev.filter((_, i) => i !== index));
+        setImages((prev) => {
+          const target = prev[index];
+          if (target?.file) URL.revokeObjectURL(target.url);
+          return prev.filter((_, i) => i !== index);
+        });
         setCurrentImage((prev) => (prev > index ? prev - 1 : prev));
       };
     
@@ -162,16 +189,13 @@ export default function ListingForm({ onSubmit, initialData }: ListingFormProps)
           return;
         }
     
-        const move = <T,>(arr: T[]) => {
-          const next = [...arr];
+        setImages((prev) => {
+          const next = [...prev];
           const [moved] = next.splice(fromIndex, 1);
           next.splice(toIndex, 0, moved);
           return next;
-        };
-    
-        setImgFiles(move);
-        setImgSrcs(move);
-    
+        });
+
         // Keep the viewer following the image the user was looking at / moving.
         setCurrentImage((prev) => {
           if (prev === fromIndex) return toIndex;
@@ -196,9 +220,10 @@ export default function ListingForm({ onSubmit, initialData }: ListingFormProps)
       };
     
       const resetForm = () => {
-        imgSrcs.forEach((src) => URL.revokeObjectURL(src));
-        setImgFiles([]);
-        setImgSrcs([]);
+        images.forEach((img) => {
+          if (img.file) URL.revokeObjectURL(img.url);
+        });
+        setImages([]);
         setCurrentImage(0);
         setFormData(EMPTY_FORM);
       };
@@ -220,15 +245,20 @@ export default function ListingForm({ onSubmit, initialData }: ListingFormProps)
         appendedFormData.append('condition', String(formData.condition));
         appendedFormData.append('location', String(formData.location));
         appendedFormData.append('categoryId', String(formData.categoryId));
-    
-        for(const file of formData.images) {
-            const compressed = await imageCompression(file, {
+        appendedFormData.append(
+          'existingImageIds',
+          JSON.stringify(images.filter((img) => img.existingId).map((img) => img.existingId))
+        );
+
+        for(const img of images) {
+            if (!img.file) continue;
+            const compressed = await imageCompression(img.file, {
               maxSizeMB: 5,
               maxWidthOrHeight: 1920,
             });
             appendedFormData.append('images', compressed);
         };
-    
+
         setSubmitting(true);
         try {
           const result = await onSubmit(appendedFormData);
@@ -236,17 +266,22 @@ export default function ListingForm({ onSubmit, initialData }: ListingFormProps)
           if (result.status === 201) {
             resetForm();
           }
+          if (result.status && result.status >= 200 && result.status < 300) {
+            onSuccess?.();
+          }
         } finally {
           setSubmitting(false);
         }
       };
-    
+
     return (
         <div className="mx-auto max-w-4xl px-4 py-24">
       <div className="mb-8 space-y-1">
-        <h1 className="text-3xl font-bold tracking-tight">Create Listing</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          {isEditing ? "Edit Listing" : "Create Listing"}
+        </h1>
         <p className="text-muted-foreground">
-          Sell your items to fellow Panthers.
+          {isEditing ? "Update your listing details." : "Sell your items to fellow Panthers."}
         </p>
       </div>
 
@@ -258,7 +293,7 @@ export default function ListingForm({ onSubmit, initialData }: ListingFormProps)
               {message && (
                 <div
                   className={`rounded-2xl border p-4 text-sm ${
-                    message.status === 201
+                    message.status && message.status >= 200 && message.status < 300
                       ? "border-green-200 bg-green-50 text-green-700"
                       : "border-red-200 bg-red-50 text-red-700"
                   }`}
@@ -269,7 +304,7 @@ export default function ListingForm({ onSubmit, initialData }: ListingFormProps)
 
               <div className="space-y-3">
                 <Label>
-                  Photos {imgFiles.length}/{MAX_IMAGES}
+                  Photos {images.length}/{MAX_IMAGES}
                 </Label>
                 <div
                   onClick={() => imagesInputRef.current?.click()}
@@ -388,7 +423,7 @@ export default function ListingForm({ onSubmit, initialData }: ListingFormProps)
                   type="button"
                   variant="outline"
                   className="rounded-xl"
-                  onClick={resetForm}
+                  onClick={onCancel ?? resetForm}
                   disabled={submitting}
                 >
                   Cancel
@@ -398,7 +433,9 @@ export default function ListingForm({ onSubmit, initialData }: ListingFormProps)
                   className="rounded-xl"
                   disabled={!isValid || submitting}
                 >
-                  {submitting ? "Publishing..." : "Publish Listing"}
+                  {submitting
+                    ? isEditing ? "Saving..." : "Publishing..."
+                    : isEditing ? "Save Changes" : "Publish Listing"}
                 </Button>
               </div>
             </CardContent>

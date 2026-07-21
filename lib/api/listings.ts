@@ -11,7 +11,7 @@ export const create = async (dataForm: FormData) => {
 }
 
 export const update = async (id: string, dataForm: FormData) => {
-    const { data, status} = await api.post(`/listings/${id}`, dataForm);
+    const { data, status} = await api.patch(`/listings/${id}`, dataForm);
     return { data, status };
 }
 

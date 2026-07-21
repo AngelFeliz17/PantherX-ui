@@ -1,24 +1,30 @@
 "use client";
 
-import ListingForm, { EMPTY_FORM } from "@/components/ui/listing-form";
-import { ListingFormData } from "@/interfaces/listing";
+import ListingForm from "@/components/ui/listing-form";
+import { Listing } from "@/interfaces/listing";
 import { find, update } from "@/lib/api/listings";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export default function CreateListingPage() {
+export default function EditListingPage() {
     const { id }: { id: string } = useParams();
-    const [initialData, setInitialData] = useState<ListingFormData>(EMPTY_FORM);
-    
+    const router = useRouter();
+    const [initialData, setInitialData] = useState<Listing>();
+
     useEffect(() => {
+        if(!id) return;
         const findListing = async () => {
             const listing = await find(id);
             setInitialData(listing);
         };
-        console.log(initialData)
         findListing();
-    }, [id])
+      }, [id])
   return (
-    <ListingForm initialData={initialData} onSubmit={(data: any) => update(id, data)} />
+    <ListingForm
+      initialData={initialData}
+      onSubmit={(data: any) => update(id, data)}
+      onSuccess={() => router.push(`/listings/${id}`)}
+      onCancel={() => router.push(`/listings/${id}`)}
+    />
   );
 }

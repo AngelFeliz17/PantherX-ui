@@ -10,6 +10,13 @@ export interface ListingFormData {
   images: File[];
 }
 
+export type ListingImage = {
+  id: string;
+  url: string;
+  order: number;
+  publicId: string;
+}
+
 export type Listing = {
   id: string;
   title: string;
@@ -19,11 +26,7 @@ export type Listing = {
   condition: string;
   location: string;
   createdAt: Date;
-  images: {
-    id: string;
-    url: string;
-    order: number;
-  }[]
+  images: ListingImage[];
   seller: User;
   category: {
     id: string;
