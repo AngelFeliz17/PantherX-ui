@@ -133,7 +133,9 @@ export default function ListingCard({ listing }: { listing: Listing }) {
             {isOwner ? (
               <>
                 <Link href={`/listings/edit/${listing.id}`}>
-                  <DropdownMenuItem className="cursor-pointer rounded-xl px-2.5 py-2.5">
+                  <DropdownMenuItem className="cursor-pointer rounded-xl px-2.5 py-2.5"
+                  
+                  >
                   <Pencil className="size-4" />
                   Edit listing
                 </DropdownMenuItem>

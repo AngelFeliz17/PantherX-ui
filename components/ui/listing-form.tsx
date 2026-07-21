@@ -245,10 +245,12 @@ export default function ListingForm({ onSubmit, initialData, onSuccess, onCancel
         appendedFormData.append('condition', String(formData.condition));
         appendedFormData.append('location', String(formData.location));
         appendedFormData.append('categoryId', String(formData.categoryId));
-        appendedFormData.append(
-          'existingImageIds',
-          JSON.stringify(images.filter((img) => img.existingId).map((img) => img.existingId))
-        );
+        if (isEditing) {
+          appendedFormData.append(
+            'existingImageIds',
+            JSON.stringify(images.filter((img) => img.existingId).map((img) => img.existingId))
+          );
+        }
 
         for(const img of images) {
             if (!img.file) continue;
